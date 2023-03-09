@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57d45db44124e3c409774f5826cb043f, type: 3}
   m_Name: New Terrain Data
   m_EditorClassIdentifier: 
-  heightMap: {fileID: 2800000, guid: ceaeb90c73b2cc04cb927d4103b8e726, type: 3}
---- !u!28 &6485931694422723082
+  heightMap: {fileID: 2800000, guid: 40d2042cb74a87044b5eb079d4e8ff61, type: 3}
+--- !u!28 &2875110897927175079
 Texture2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
