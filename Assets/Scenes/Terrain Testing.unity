@@ -156,7 +156,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   terrain: {fileID: 99653322}
-  dataToLoad: {fileID: 11400000, guid: 599c165e6206f1846aedf145fe87ec9b, type: 2}
+  dataToLoad: {fileID: 11400000, guid: f00a0b2a9c658d144b63fc0fa06e2f4e, type: 2}
 --- !u!114 &99653320
 MonoBehaviour:
   m_ObjectHideFlags: 0

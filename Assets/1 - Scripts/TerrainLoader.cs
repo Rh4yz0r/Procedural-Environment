@@ -22,7 +22,7 @@ public class TerrainLoader : MonoBehaviour
     {
         float timerStart = Time.realtimeSinceStartup;
         Debug.Log("Started Test");
-        //TextureMapData.TextureToPixelGrid(dataToLoad.heightMap);
+        TextureMapData.TextureToPixelGrid(dataToLoad.HeightMap);
         Debug.Log($"Finished Test in: {Time.realtimeSinceStartup - timerStart} seconds");
     }
 }
