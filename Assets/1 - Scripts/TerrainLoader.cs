@@ -25,4 +25,23 @@ public class TerrainLoader : MonoBehaviour
         TextureMapData.TextureToPixelGrid(dataToLoad.HeightMap);
         Debug.Log($"Finished Test in: {Time.realtimeSinceStartup - timerStart} seconds");
     }
+    
+    [ContextMenu("Set textures")]
+    public void SetTextures()
+    {
+        /*float[,,] map = new float[terrain.terrainData.alphamapWidth, terrain.terrainData.alphamapHeight, 2];
+
+        for (int y = 0; y < terrain.terrainData.alphamapHeight; y++)
+        {
+            for (int x = 0; x < terrain.terrainData.alphamapWidth; x++)
+            {
+                map[x, y, 0] = Color.red;
+            }
+        }*/
+        
+
+        terrain.terrainData.alphamapTextures[1] = dataToLoad.HeightMap;
+        terrain.terrainData.SetBaseMapDirty();
+        Debug.Log("Set Textures");
+    }
 }

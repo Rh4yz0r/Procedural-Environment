@@ -49,9 +49,52 @@ public class TerrainData : ScriptableObject
             else
             {
                 Texture2D blankTexture = new Texture2D((int)_textureSize.x, (int)_textureSize.y, heightMapFormat, -1, false) { name = heightMapName };
-                SetTextureToColor(blankTexture, Color.black);
+                TextureMapGenerator.SetTextureToColor(blankTexture, Color.black);
                 
                 EditorUtility.CopySerialized(blankTexture, heightMapAsset);
+#if UNITY_EDITOR
+                if(ENABLE_CONSOLE_LOGS) Debug.Log("Updated to null (blank)");
+#endif
+            }
+        }
+    }
+    
+    private readonly string slopeMapName = "Slope Map";
+    private readonly TextureFormat slopeMapFormat = TextureFormat.R16;
+
+    [SerializeField] private Texture2D slopeMap;
+    public Texture2D SlopeMap
+    {
+        get
+        {
+            var assets = AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(this));
+            return assets.FirstOrDefault(a => a.name == slopeMapName) as Texture2D;
+        }
+        set
+        {
+            var assets = AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(this));
+            var slopeMapAsset = assets.FirstOrDefault(a => a.name == slopeMapName);
+
+            if (!slopeMapAsset)
+            {
+                Debug.LogError("Cannot find slope map asset!");
+                return;
+            }
+            
+            if (value != null)
+            {
+                value.name = slopeMapName;
+                EditorUtility.CopySerialized(value, slopeMapAsset);
+#if UNITY_EDITOR
+                if(ENABLE_CONSOLE_LOGS) Debug.Log("Updated");
+#endif
+            }
+            else
+            {
+                Texture2D blankTexture = new Texture2D((int)_textureSize.x, (int)_textureSize.y, slopeMapFormat, -1, false) { name = slopeMapName };
+                TextureMapGenerator.SetTextureToColor(blankTexture, Color.black);
+                
+                EditorUtility.CopySerialized(blankTexture, slopeMapAsset);
 #if UNITY_EDITOR
                 if(ENABLE_CONSOLE_LOGS) Debug.Log("Updated to null (blank)");
 #endif
@@ -62,75 +105,111 @@ public class TerrainData : ScriptableObject
     public void GenerateNewHeightMap()
     {
         Texture2D newHeightMap = new Texture2D((int)_textureSize.x, (int)_textureSize.y, heightMapFormat, -1, false) { name = heightMapName };
-        SetTextureToColor(newHeightMap, Color.black);
+        TextureMapGenerator.SetTextureToColor(newHeightMap, Color.black);
 
         HeightMap = newHeightMap;
         heightMap = HeightMap;
     }
-    
-    private void SetTextureToColor(Texture2D texture2D, Color color)
+
+    public void GenerateSlopeMap()
     {
-        Color fillColor = color;
-        var fillColorArray = new Color[texture2D.width * texture2D.height];
+        TextureMapData newSlopeMap = TextureMapGenerator.GenerateSlopeMap(heightMap);
 
-        for (var i = 0; i < fillColorArray.Length; ++i)
+        foreach (var pixel in newSlopeMap.Pixels)
         {
-            fillColorArray[i] = fillColor;
+            //Debug.Log(pixel);
         }
-
-        texture2D.SetPixels(fillColorArray);
-
-        texture2D.Apply();
+        
+        SlopeMap = newSlopeMap.Texture2D;
+        slopeMap = SlopeMap;
     }
-    
+
 #if UNITY_EDITOR
     private void Awake()
     {
-        Init();
+        InitHeightMap();
+        InitSlopeMap();
     }
 
     private void OnValidate()
     {
-        Init();
+        InitHeightMap();
+        InitSlopeMap();
         HeightMap = heightMap;
+        SlopeMap = slopeMap;
     }
 
     private void Reset()
     {
-        Init();
+        InitHeightMap();
+        InitSlopeMap();
     }
 
     private void OnDestroy()
     {
-        EditorApplication.update -= DelayedInit;
+        EditorApplication.update -= DelayedInitHeightMap;
+        EditorApplication.update -= DelayedInitSlopeMap;
     }
 
     #region Creating Child Assets
-    private void Init()
+    private void InitHeightMap()
     {
         if (HeightMap) { return; }
         
         if (AssetDatabase.Contains(this))
         {
-            DelayedInit();
+            DelayedInitHeightMap();
         }
         else
         {
-            EditorApplication.update -= DelayedInit;
-            EditorApplication.update += DelayedInit;
+            EditorApplication.update -= DelayedInitHeightMap;
+            EditorApplication.update += DelayedInitHeightMap;
         }
     }
 
-    private void DelayedInit()
+    private void DelayedInitHeightMap()
     {
         if (!AssetDatabase.Contains(this)) { return; }
         
-        EditorApplication.update -= DelayedInit;
+        EditorApplication.update -= DelayedInitHeightMap;
 
         if (!HeightMap)
         {
             var heightMapAsset = new Texture2D((int)_textureSize.x, (int)_textureSize.y, heightMapFormat, -1, false){ name = heightMapName };
             AssetDatabase.AddObjectToAsset(heightMapAsset, this);
+            heightMap = HeightMap;
+        }
+        
+        EditorUtility.SetDirty(this);
+        AssetDatabase.SaveAssets();
+    }
+    
+    private void InitSlopeMap()
+    {
+        if (SlopeMap) { return; }
+        
+        if (AssetDatabase.Contains(this))
+        {
+            DelayedInitSlopeMap();
+        }
+        else
+        {
+            EditorApplication.update -= DelayedInitSlopeMap;
+            EditorApplication.update += DelayedInitSlopeMap;
+        }
+    }
+
+    private void DelayedInitSlopeMap()
+    {
+        if (!AssetDatabase.Contains(this)) { return; }
+        
+        EditorApplication.update -= DelayedInitSlopeMap;
+
+        if (!SlopeMap)
+        {
+            var slopeMapAsset = new Texture2D((int)_textureSize.x, (int)_textureSize.y, slopeMapFormat, -1, false){ name = slopeMapName };
+            AssetDatabase.AddObjectToAsset(slopeMapAsset, this);
+            slopeMap = SlopeMap;
         }
         
         EditorUtility.SetDirty(this);
@@ -157,7 +236,7 @@ public class TerrainDataScriptableObjectEditor : Editor
     private void SerializeProperties()
     {
         _heightMap = serializedObject.FindProperty("HeightMap");
-        //_slopeMap = serializedObject.FindProperty("SlopeMap");
+        _slopeMap = serializedObject.FindProperty("SlopeMap");
     }
 
     public override void OnInspectorGUI()
@@ -168,6 +247,10 @@ public class TerrainDataScriptableObjectEditor : Editor
         if (GUILayout.Button("Generate Height Map"))
         {
             _context.GenerateNewHeightMap();
+        }
+        if (GUILayout.Button("Generate Slope Map"))
+        {
+            _context.GenerateSlopeMap();
         }
 
         //if (GUI.changed) { EditorUtility.SetDirty(_context); }

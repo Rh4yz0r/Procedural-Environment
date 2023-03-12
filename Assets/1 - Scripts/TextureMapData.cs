@@ -9,11 +9,37 @@ public class TextureMapData
 #endif
     
     public Texture2D Texture2D;
-    public Color[,] Pixels;
+
+    private Color[,] _pixels;
+    public Color[,] Pixels
+    {
+        get => _pixels;
+        set
+        {
+            _pixels = value;
+
+            var pixels = new Color[value.Length];
+            int index = 0;
+            
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    pixels[index] = value[x, y];
+                    index++;
+                }
+            }
+            
+            Texture2D.SetPixels(0, 0, Width, Height, pixels);
+        }
+    }
     public float[,] RedValues;
     public float[,] GreenValues;
     public float[,] BlueValues;
     public float[,] AlphaValues;
+
+    public int Width;
+    public int Height;
 
     public TextureMapData() { }
 
@@ -25,6 +51,8 @@ public class TextureMapData
         this.GreenValues = greenValues;
         this.BlueValues = blueValues;
         this.AlphaValues = alphaValues;
+        this.Width = texture2D.width;
+        this.Height = texture2D.height;
     }
 
     public TextureMapData(Texture2D texture2D)
@@ -35,6 +63,8 @@ public class TextureMapData
         this.GreenValues = g;
         this.BlueValues = b;
         this.AlphaValues = a;
+        this.Width = texture2D.width;
+        this.Height = texture2D.height;
     }
     
     public static Color[,] TextureToPixelGrid(Texture2D texture2D)
