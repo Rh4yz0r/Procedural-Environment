@@ -56,14 +56,22 @@ public static class TextureMapGenerator
                     topHeightPixel = heightMapData.Pixels[x, y- 1];
                     bottomHeightPixel = heightMapData.Pixels[x, y + 1];
                 }
-
-                float highestValue = MaxValue(new float[] { 
+                
+                /*float highestValue = MaxValue(new float[] { 
+                    leftHeightPixel.r - heightMapData.Pixels[x, y].r, 
+                    rightHeightPixel.r - heightMapData.Pixels[x, y].r, 
+                    topHeightPixel.r - heightMapData.Pixels[x, y].r, 
+                    bottomHeightPixel.r - heightMapData.Pixels[x, y].r });
+                
+                newPixels[x, y] = new Color(highestValue*10, 0, 0, 0);*/
+                
+                float averageValue = AverageValue(new float[] { 
                     leftHeightPixel.r - heightMapData.Pixels[x, y].r, 
                     rightHeightPixel.r - heightMapData.Pixels[x, y].r, 
                     topHeightPixel.r - heightMapData.Pixels[x, y].r, 
                     bottomHeightPixel.r - heightMapData.Pixels[x, y].r });
 
-                newPixels[x, y] = new Color(highestValue*10, 0, 0, 0);
+                newPixels[x, y] = new Color(averageValue*100, 0, 0, 0);
             }
         }
 
@@ -103,5 +111,16 @@ public static class TextureMapGenerator
         }
         //Debug.Log($"MAX: {max}");
         return max;
+    }
+
+    private static float AverageValue(float[] floatArray)
+    {
+        var sum = 0f;
+        for (int i = 0; i < floatArray.Length; i++)
+        {
+            sum += floatArray[i];
+        }
+        //Debug.Log(sum / floatArray.Length);
+        return sum / floatArray.Length;
     }
 }
