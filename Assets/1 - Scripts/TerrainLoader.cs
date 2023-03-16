@@ -18,7 +18,17 @@ public class TerrainLoader : MonoBehaviour
 
         try
         {
-            CopyTextureToTerrainHeight(terrain.terrainData, dataToLoad.HeightMap, new Vector2Int(0, 0), dataToLoad.HeightMap.width, 1, 0, 0);
+            float wantedMaxHeight = 600;
+            float TerrainHeight = wantedMaxHeight;
+            
+            float HeightmapRemapMax = 600;
+            float HeightmapRemapMin = 0;
+            
+            // heightmap remap
+            var remap = (HeightmapRemapMax - HeightmapRemapMin) / TerrainHeight;
+            var baseLevel = HeightmapRemapMin / TerrainHeight;
+            
+            CopyTextureToTerrainHeight(terrain.terrainData, dataToLoad.HeightMap, new Vector2Int(0, 0), terrain.terrainData.heightmapResolution, 1, baseLevel, remap);
         
             if (terrain.terrainData.heightmapResolution != dataToLoad.HeightMap.width)
             {
