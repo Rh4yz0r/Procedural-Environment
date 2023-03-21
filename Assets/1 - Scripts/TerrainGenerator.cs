@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 /*
@@ -21,15 +23,17 @@ using UnityEngine;
 public class TerrainMeshSettings
 {
     public Vector2Int TerrainSize = Vector2Int.one;
-    [Range(1, 1000)] public int TerrainDetail = 1;
+    public int QuadSize = 1;
+    //[Range(1, 10)] public int TerrainDetail = 1;
 
     public int WidthTotal => TerrainSize.x;
     public int HeightTotal => TerrainSize.y;
 
-    public float QuadSize => 1f / TerrainDetail;
-
-    public int QuadsX => TerrainSize.x * TerrainDetail;
-    public int QuadsY => TerrainSize.y * TerrainDetail;
+    public int QuadsX => TerrainSize.x / QuadSize;
+    public int QuadsY => TerrainSize.y / QuadSize;
+    
+    /*public int QuadsX => TerrainSize.x * TerrainDetail;
+    public int QuadsY => TerrainSize.y * TerrainDetail;*/
     public int QuadsTotal => QuadsX * QuadsY;
     
 
@@ -62,25 +66,32 @@ public class TerrainGenerator : MonoBehaviour
         GenerateTerrainMesh(terrainMeshSettings);
     }
     
-    public void GenerateTerrainMesh(TerrainMeshSettings settings)
+    public void GenerateTerrainMeshWithHeight(TerrainMeshSettings settings, TextureMapData textureMapData)
     {
+        //Undo.RegisterCompleteObjectUndo(this.gameObject, "Load new terrain mesh");
+
         List<Vector3> newVertices = new List<Vector3>();
         List<Vector2> newUV = new List<Vector2>();
         List<int> newTriangles = new List<int>();
+        
+        int total = settings.VerticesX * settings.VerticesY;
+        float progress = 0;
         
         for (int y = 0; y < settings.VerticesY - 1; y++)
         {
             for (int x = 0; x < settings.VerticesX - 1; x++)
             {
-                var A = new Vector3(x * settings.QuadSize, 0, y * settings.QuadSize);
-                var B = new Vector3(x * settings.QuadSize, 0, y+1 * settings.QuadSize);
-                var C = new Vector3(x+1 * settings.QuadSize, 0, y * settings.QuadSize);
-                var D = new Vector3(x+1 * settings.QuadSize, 0, y+1 * settings.QuadSize);
+                EditorUtility.DisplayProgressBar("Creating new terrain mesh", $"Creating tile x:{x},y:{y}", progress);
 
-                if (!newVertices.Contains(A)) newVertices.Add(A);
-                if (!newVertices.Contains(B)) newVertices.Add(B);
-                if (!newVertices.Contains(C)) newVertices.Add(C);
-                if (!newVertices.Contains(D)) newVertices.Add(D);
+                var A = new Vector3(x * settings.QuadSize, textureMapData.Pixels[x, y].r*textureMapData.Height, y * settings.QuadSize);
+                var B = new Vector3(x * settings.QuadSize, textureMapData.Pixels[x, y+1].r*textureMapData.Height, (y+1) * settings.QuadSize);
+                var C = new Vector3((x+1) * settings.QuadSize, textureMapData.Pixels[x+1, y].r*textureMapData.Height, y * settings.QuadSize);
+                var D = new Vector3((x+1) * settings.QuadSize, textureMapData.Pixels[x+1, y+1].r*textureMapData.Height, (y+1) * settings.QuadSize);
+
+                if (!newVertices.Contains(A)) {newVertices.Add(A); newUV.Add(new Vector2(A.x/textureMapData.Width, A.z/textureMapData.Height));}
+                if (!newVertices.Contains(B)) {newVertices.Add(B); newUV.Add(new Vector2(B.x/textureMapData.Width, B.z/textureMapData.Height));}
+                if (!newVertices.Contains(C)) {newVertices.Add(C); newUV.Add(new Vector2(C.x/textureMapData.Width, C.z/textureMapData.Height));}
+                if (!newVertices.Contains(D)) {newVertices.Add(D); newUV.Add(new Vector2(D.x/textureMapData.Width, D.z/textureMapData.Height));}
 
                 newTriangles.Add(newVertices.IndexOf(A));
                 newTriangles.Add(newVertices.IndexOf(B));
@@ -89,6 +100,8 @@ public class TerrainGenerator : MonoBehaviour
                 newTriangles.Add(newVertices.IndexOf(A));
                 newTriangles.Add(newVertices.IndexOf(D));
                 newTriangles.Add(newVertices.IndexOf(C));
+
+                progress += 1f / total;
             }  
         }
         
@@ -104,68 +117,64 @@ public class TerrainGenerator : MonoBehaviour
         //mesh.normals = newNormals.ToArray();
         mesh.RecalculateNormals();
 
-        if(mesh == null) Debug.Log("mesh == null");
-        
         _meshFilter.mesh = mesh;
 
-        /*List<Triangle> triangles = new List<Triangle>();
-
-        for (int x = 0; x < width * detail; x++)
-        {
-            for (int z = 0; z < height * detail; z++)
-            {
-                float y = transform.position.z;
-                
-                Vertex vertA = new Vertex(x * _tileSize, y, z * _tileSize); 
-                vertA.UV = new Vector2(x*_tileSize, z * _tileSize);
-                
-                Vertex vertB = new Vertex(x * _tileSize + _tileSize, y, z * _tileSize); 
-                vertB.UV = new Vector2(x * _tileSize + _tileSize, z * _tileSize);
-                
-                Vertex vertC = new Vertex(x * _tileSize, y, z * _tileSize + _tileSize); 
-                vertC.UV = new Vector2(x * _tileSize, z * _tileSize + _tileSize);
-                
-                Vertex vertD = new Vertex(x * _tileSize + _tileSize, y, z * _tileSize + _tileSize);
-                vertD.UV = new Vector2(x * _tileSize + _tileSize, z * _tileSize + _tileSize);
-
-                Triangle triDBA = new Triangle(vertD, vertB, vertA);
-                Triangle triACD = new Triangle(vertA, vertC, vertD);
-                
-                triangles.Add(triDBA);
-                triangles.Add(triACD);
-            }
-        }
-        
-        if (enableEditorMessages) Debug.Log($"Created triangles: {triangles.Count}");
+        EditorUtility.ClearProgressBar();
+    }
+    
+    public void GenerateTerrainMesh(TerrainMeshSettings settings)
+    {
+        //Undo.RegisterCompleteObjectUndo(this.gameObject, "Load new terrain mesh");
         
         List<Vector3> newVertices = new List<Vector3>();
+        List<Vector2> newUV = new List<Vector2>();
         List<int> newTriangles = new List<int>();
-        List<Vector2> newUv = new List<Vector2>();
-        List<Vector3> newNormals = new List<Vector3>();
         
-        foreach (Triangle triangle in triangles)
+        int total = settings.VerticesX * settings.VerticesY;
+        float progress = 0;
+        
+        for (int y = 0; y < settings.VerticesY - 1; y++)
         {
-            newVertices.Add(triangle.Vertex1.Position);
-            newVertices.Add(triangle.Vertex2.Position);
-            newVertices.Add(triangle.Vertex3.Position);
-            
-            newTriangles.Add(newTriangles.Count);
-            newTriangles.Add(newTriangles.Count);
-            newTriangles.Add(newTriangles.Count);
-            
-            newUv.Add(triangle.Vertex1.UV);
-            newUv.Add(triangle.Vertex2.UV);
-            newUv.Add(triangle.Vertex3.UV);
+            for (int x = 0; x < settings.VerticesX - 1; x++)
+            {
+                EditorUtility.DisplayProgressBar("Creating new terrain mesh", $"Creating tile x:{x},y:{y}", progress);
+                
+                var A = new Vector3(x * settings.QuadSize, 0, y * settings.QuadSize);
+                var B = new Vector3(x * settings.QuadSize, 0, (y+1) * settings.QuadSize);
+                var C = new Vector3((x+1) * settings.QuadSize, 0, y * settings.QuadSize);
+                var D = new Vector3((x+1) * settings.QuadSize, 0, (y+1) * settings.QuadSize);
+
+                if (!newVertices.Contains(A)) {newVertices.Add(A); newUV.Add(new Vector2(A.x/settings.TerrainSize.x, A.z/settings.TerrainSize.y));}
+                if (!newVertices.Contains(B)) {newVertices.Add(B); newUV.Add(new Vector2(B.x/settings.TerrainSize.x, B.z/settings.TerrainSize.y));}
+                if (!newVertices.Contains(C)) {newVertices.Add(C); newUV.Add(new Vector2(C.x/settings.TerrainSize.x, C.z/settings.TerrainSize.y));}
+                if (!newVertices.Contains(D)) {newVertices.Add(D); newUV.Add(new Vector2(D.x/settings.TerrainSize.x, D.z/settings.TerrainSize.y));}
+
+                newTriangles.Add(newVertices.IndexOf(A));
+                newTriangles.Add(newVertices.IndexOf(B));
+                newTriangles.Add(newVertices.IndexOf(D));
+                
+                newTriangles.Add(newVertices.IndexOf(A));
+                newTriangles.Add(newVertices.IndexOf(D));
+                newTriangles.Add(newVertices.IndexOf(C));
+
+                progress += 1f / total;
+            }  
         }
         
-        if (enableEditorMessages) Debug.Log($"Added vertices: {newVertices.Count}");
-        if (enableEditorMessages) Debug.Log($"Added triangles: {newTriangles.Count}");
-        
-        _mesh.Clear();
-        _mesh.vertices = newVertices.ToArray();
-        _mesh.triangles = newTriangles.ToArray();
-        _mesh.uv = newUv.ToArray();
-        _mesh.normals = newNormals.ToArray();
-        _mesh.RecalculateNormals();*/
+#if UNITY_EDITOR
+        if (ENABLE_CONSOLE_LOGS) Debug.Log($"Added vertices: {newVertices.Count}");
+        if (ENABLE_CONSOLE_LOGS) Debug.Log($"Added triangles: {newTriangles.Count}");
+#endif
+
+        Mesh mesh = new Mesh();
+        mesh.vertices = newVertices.ToArray();
+        mesh.triangles = newTriangles.ToArray();
+        //mesh.uv = newUV.ToArray();
+        //mesh.normals = newNormals.ToArray();
+        mesh.RecalculateNormals();
+
+        _meshFilter.mesh = mesh;
+
+        EditorUtility.ClearProgressBar();
     }
 }
