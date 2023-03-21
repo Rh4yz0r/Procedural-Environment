@@ -28,11 +28,11 @@ public class TerrainLoader : MonoBehaviour
             var remap = (HeightmapRemapMax - HeightmapRemapMin) / TerrainHeight;
             var baseLevel = HeightmapRemapMin / TerrainHeight;
             
-            CopyTextureToTerrainHeight(terrain.terrainData, dataToLoad.HeightMap, new Vector2Int(0, 0), terrain.terrainData.heightmapResolution, 1, baseLevel, remap);
+            CopyTextureToTerrainHeight(terrain.terrainData, dataToLoad.heightMap.Asset, new Vector2Int(0, 0), terrain.terrainData.heightmapResolution, 1, baseLevel, remap);
         
-            if (terrain.terrainData.heightmapResolution != dataToLoad.HeightMap.width)
+            if (terrain.terrainData.heightmapResolution != dataToLoad.heightMap.Asset.width)
             {
-                ResizeHeightmap(terrain.terrainData, dataToLoad.HeightMap.width);
+                ResizeHeightmap(terrain.terrainData, dataToLoad.heightMap.Asset.width);
             }
         }
         finally
@@ -49,7 +49,7 @@ public class TerrainLoader : MonoBehaviour
     {
         float timerStart = Time.realtimeSinceStartup;
         Debug.Log("Started Test");
-        TextureMapData.TextureToPixelGrid(dataToLoad.HeightMap);
+        TextureMapData.TextureToPixelGrid(dataToLoad.heightMap.Asset);
         Debug.Log($"Finished Test in: {Time.realtimeSinceStartup - timerStart} seconds");
     }
     
@@ -67,7 +67,7 @@ public class TerrainLoader : MonoBehaviour
         }*/
         
         //terrain.terrainData.splatPrototypes
-        terrain.terrainData.alphamapTextures[1] = dataToLoad.SlopeMap;
+        terrain.terrainData.alphamapTextures[1] = dataToLoad.slopeMap.Asset;
         terrain.terrainData.SetBaseMapDirty();
         Debug.Log("Set Textures");
     }
