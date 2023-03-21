@@ -1,14 +1,36 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
+[RequireComponent(typeof(TerrainGenerator))]
 public class TerrainLoader : MonoBehaviour
 {
-    public Terrain terrain;
-    public CustomTerrainData dataToLoad;
+    private TerrainGenerator _generator;
 
-    [ContextMenu("Load")]
+    public CustomTerrainData dataToLoad;
+    
+    private void OnValidate()
+    {
+        _generator = GetComponent<TerrainGenerator>();
+    }
+
+    [ContextMenu("Load Terrain")]
+    public void LoadTerrainData()
+    {
+        TerrainMeshSettings settings = new TerrainMeshSettings();
+        settings.TerrainSize = new Vector2Int(dataToLoad.HeightMap.width-1, dataToLoad.HeightMap.height-1);
+        settings.QuadSize = 1;
+        
+        _generator.GenerateTerrainMeshWithHeight(settings, new TextureMapData(dataToLoad.HeightMap));
+    }
+    
+
+    //public Terrain terrain;
+    //public CustomTerrainData dataToLoad;
+
+    /*[ContextMenu("Load")]
     public void LoadDataToTerrain()
     {
         float timerStart = Time.realtimeSinceStartup;
@@ -64,7 +86,7 @@ public class TerrainLoader : MonoBehaviour
             {
                 map[x, y, 0] = Color.red;
             }
-        }*/
+        }#1#
         
         //terrain.terrainData.splatPrototypes
         terrain.terrainData.alphamapTextures[1] = dataToLoad.slopeMap.Asset;
@@ -90,7 +112,7 @@ public class TerrainLoader : MonoBehaviour
         blitMaterial.SetFloat("_Height_Offset", baseLevel * kNormalizedHeightScale);
         blitMaterial.SetFloat("_Height_Scale", remap * kNormalizedHeightScale);
         RenderTexture heightmapRT = RenderTexture.GetTemporary(terrainData.heightmapTexture.descriptor);
-        Graphics.Blit(heightmap, heightmapRT/*, blitMaterial*/);
+        Graphics.Blit(heightmap, heightmapRT/*, blitMaterial#1#);
 
         Graphics.Blit(heightmapRT, terrainData.heightmapTexture, scaleV, offsetV);
 
@@ -156,5 +178,5 @@ public class TerrainLoader : MonoBehaviour
 #if UNITY_2019_3_OR_NEWER
             terrainData.DirtyTextureRegion(TerrainData.HolesTextureName, new RectInt(0, 0, terrainData.holesTexture.width, terrainData.holesTexture.height), false);
 #endif
-        }
+        }*/
 }
