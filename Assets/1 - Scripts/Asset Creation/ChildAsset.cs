@@ -51,7 +51,7 @@ public class ChildAsset<T> where T : Object
         }
     }
 
-    [SerializeField] public T asset;
+    [SerializeField] private T _asset;
 
     public ChildAsset(string assetName, ParentScriptableObjectAsset parent)
     {
@@ -59,10 +59,7 @@ public class ChildAsset<T> where T : Object
         this.Parent = parent;
 
         Init();
-        this.Parent.OnAwakeEvent += Init;
-        this.Parent.OnValidateEvent += Validate;
-        this.Parent.OnResetEvent += Init;
-        this.Parent.OnDestroyEvent += Destroy;
+        Subscribe();
     }
     
     public ChildAsset(string assetName, ParentScriptableObjectAsset parent, bool enableConsoleLogs)
@@ -71,32 +68,38 @@ public class ChildAsset<T> where T : Object
         this.Parent = parent;
 
         Init();
-        this.Parent.OnAwakeEvent += Init;
-        this.Parent.OnValidateEvent += Validate;
-        this.Parent.OnResetEvent += Init;
-        this.Parent.OnDestroyEvent += Destroy;
+        Subscribe();
 
         EnableConsoleLogs = enableConsoleLogs;
     }
     
     protected void SetAssetIfValueIsNull(Object asset)
     {
-        EditorUtility.CopySerialized(default, asset);
+        EditorUtility.CopySerialized(new Texture2D(0, 0){name = AssetName}, asset);
     }
 
     private void Validate()
     {
         Init(); 
-        Asset = asset;
+        Asset = _asset;
+        Debug.Log($"Validating {AssetName}");
     }
 
+    private void Subscribe()
+    {
+        this.Parent.OnAwakeEvent += Init;
+        this.Parent.OnValidateEvent += Validate;
+        this.Parent.OnResetEvent += Init;
+        this.Parent.OnDestroyEvent += Destroy;
+    }
+    
     private void Destroy()
     {
         EditorApplication.update -= DelayedInit;
-        Parent.OnAwakeEvent -= Init;
-        Parent.OnValidateEvent -= Validate;
-        Parent.OnResetEvent -= Init;
-        Parent.OnDestroyEvent -= Destroy;
+        //Parent.OnAwakeEvent -= Init;
+        //Parent.OnValidateEvent -= Validate;
+        //Parent.OnResetEvent -= Init;
+        //Parent.OnDestroyEvent -= Destroy;
     }
 
     protected void Create()
@@ -108,7 +111,7 @@ public class ChildAsset<T> where T : Object
 
     public void Refresh()
     {
-        asset = Asset;
+        _asset = Asset;
     }
 
     private void Init()
@@ -135,7 +138,7 @@ public class ChildAsset<T> where T : Object
         if (!Asset)
         {
             Create();
-            asset = Asset;
+            _asset = Asset;
         }
         
         EditorUtility.SetDirty(Parent);

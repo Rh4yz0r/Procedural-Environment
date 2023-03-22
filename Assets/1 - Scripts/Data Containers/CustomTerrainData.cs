@@ -55,7 +55,7 @@ public class CustomTerrainData : ParentScriptableObjectAsset
     public void GenerateTextureMap()
     {
         TextureMapData newTextureMap = TextureMapGenerator.GenerateTextureMap(heightMap.Asset, slopeMap.Asset);
-
+        
         textureMap.Asset = newTextureMap.Texture2D;
         textureMap.Refresh();
     }
@@ -64,7 +64,7 @@ public class CustomTerrainData : ParentScriptableObjectAsset
     {
         TextureMapData newSlopeMap = TextureMapGenerator.GenerateSlopeMap(heightMap.Asset);
         newSlopeMap = TextureMapGenerator.SmoothMap(newSlopeMap.Texture2D);
-
+        
         slopeMap.Asset = newSlopeMap.Texture2D;
         slopeMap.Refresh();
     }

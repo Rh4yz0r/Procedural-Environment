@@ -13,25 +13,25 @@ public class ParentScriptableObjectAsset : ScriptableObject
     protected virtual void Awake()
     {
         OnAwakeEvent?.Invoke();
-        //Debug.Log($"Awake {this.name}");
+        Debug.Log($"Awake '{this.name}'");
     }
 
     protected virtual void OnValidate()
     {
         OnValidateEvent?.Invoke();
-        //Debug.Log($"OnValidate {this.name}");
+        Debug.Log($"OnValidate '{this.name}'");
     }
 
     protected virtual void Reset()
     {
         OnResetEvent?.Invoke();
-        //Debug.Log($"Reset {this.name}");
+        Debug.Log($"Reset '{this.name}'");
     }
     
     protected virtual void OnDestroy()
     {
         OnDestroyEvent?.Invoke();
-        //Debug.Log($"OnDestroy {this.name}");
+        Debug.Log($"OnDestroy '{this.name}'");
     }
 
 }

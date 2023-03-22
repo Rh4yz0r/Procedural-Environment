@@ -10,13 +10,13 @@ public class TerrainLoader : MonoBehaviour
     private TerrainGenerator _generator;
 
     public CustomTerrainData dataToLoad;
-    
+
     private void OnValidate()
     {
         _generator = GetComponent<TerrainGenerator>();
     }
 
-    [ContextMenu("Load Terrain")]
+    /*[ContextMenu("Load Terrain")]
     public void LoadTerrainData()
     {
         TerrainMeshSettings settings = new TerrainMeshSettings();
@@ -24,8 +24,70 @@ public class TerrainLoader : MonoBehaviour
         settings.QuadSize = 1;
         
         _generator.GenerateTerrainMeshWithHeight(settings, new TextureMapData(dataToLoad.heightMap.Asset));
-    }
+    }*/
+
+    Vector3[] vertices;
     
+    /*private void OnDrawGizmos () 
+    {
+        if (vertices == null) 
+        {
+            return;
+        }
+        
+        Gizmos.color = Color.black;
+        for (int i = 0; i < vertices.Length; i++) 
+        {
+            Gizmos.DrawSphere(vertices[i], 0.1f);
+        }
+    }*/
+    
+    [ContextMenu("Load New Terrain")]
+    public void LoadNewTerrain()
+    {
+        
+        Vector2[] uv;
+        int[] triangles;
+        
+        var width = dataToLoad.heightMap.Asset.width - 1;
+        var height = dataToLoad.heightMap.Asset.height - 1;
+        
+        var mesh = new Mesh();
+        mesh.name = "New Terrain";
+        GetComponent<MeshFilter>().mesh = mesh;
+
+        TextureMapData heightMap = new TextureMapData(dataToLoad.heightMap.Asset);
+        
+        vertices = new Vector3[(width + 1) * (height + 1)];
+        uv = new Vector2[vertices.Length];
+        for (int i = 0, y = 0; y < height+1; y++) 
+        {
+            for (int x = 0; x < width+1; x++, i++) 
+            {
+                vertices[i] = new Vector3(x, heightMap.Pixels[x, y].r*heightMap.Width, y);
+                uv[i] = new Vector2((float)x / width, (float)y / height);
+            }
+        }
+
+        mesh.vertices = vertices;
+        mesh.uv = uv;
+        
+        triangles = new int[width * height * 6];
+        for (int triIndex = 0, vertIndex = 0, y = 0; y < height; y++, vertIndex++) 
+        {
+            for (int x = 0; x < width; x++, triIndex += 6, vertIndex++) 
+            {
+                triangles[triIndex] = vertIndex;
+                triangles[triIndex + 3] = triangles[triIndex + 2] = vertIndex + 1;
+                triangles[triIndex + 4] = triangles[triIndex + 1] = vertIndex + width + 1;
+                triangles[triIndex + 5] = vertIndex + width + 2;
+            }
+        }
+
+        mesh.triangles = triangles;
+        mesh.RecalculateNormals();
+    }
+
 
     //public Terrain terrain;
     //public CustomTerrainData dataToLoad;
