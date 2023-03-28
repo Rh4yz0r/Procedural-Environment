@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -74,6 +75,7 @@ public class TextureMapData
     
     public static Color[,] TextureToPixelGrid(Texture2D texture2D, out float[,] redValues, out float[,] greenValues, out float[,] blueValues, out float[,] alphaValues)
     {
+        if(texture2D == null) throw new Exception("Texture is null!");
         Color[,] pixelGrid = PixelListToGrid(texture2D.GetPixels(), texture2D.width, texture2D.height, out var r, out var g, out var b, out var a);
         redValues = r;
         greenValues = g;

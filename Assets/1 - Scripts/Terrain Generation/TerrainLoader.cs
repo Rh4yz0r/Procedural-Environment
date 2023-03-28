@@ -81,11 +81,15 @@ public class TerrainLoader : MonoBehaviour
                 triangles[triIndex + 3] = triangles[triIndex + 2] = vertIndex + 1;
                 triangles[triIndex + 4] = triangles[triIndex + 1] = vertIndex + width + 1;
                 triangles[triIndex + 5] = vertIndex + width + 2;
+                
+                if(y == height-1 && x == width-1){ Debug.Log($"NOW: {triangles[triIndex+5]} {triIndex+5}");}
             }
         }
 
         mesh.triangles = triangles;
         mesh.RecalculateNormals();
+        Debug.Log($"TRIS: {mesh.triangles.Length}, EXP: {width*height*6}");
+        Debug.Log($"LAST: {mesh.triangles[mesh.triangles.Length-1]}");
     }
 
 

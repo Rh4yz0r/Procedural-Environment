@@ -69,10 +69,11 @@ public class ChildAsset<T> where T : Object
 
         Init();
         Subscribe();
+        
 
         EnableConsoleLogs = enableConsoleLogs;
     }
-    
+
     protected void SetAssetIfValueIsNull(Object asset)
     {
         EditorUtility.CopySerialized(new Texture2D(0, 0){name = AssetName}, asset);
@@ -87,7 +88,7 @@ public class ChildAsset<T> where T : Object
 
     private void Subscribe()
     {
-        this.Parent.OnAwakeEvent += Init;
+        this.Parent.OnValidateEvent += Init;
         this.Parent.OnValidateEvent += Validate;
         this.Parent.OnResetEvent += Init;
         this.Parent.OnDestroyEvent += Destroy;
