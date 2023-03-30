@@ -213,6 +213,7 @@ public static class TextureMapGenerator
         bool heightFound = false;
         int widthSections = 1;
         int heightSections = 1;
+        
         while (!widthFound && !heightFound)
         {
             if (textureMapData.Width / widthSections <= 256) widthFound = true;
@@ -224,84 +225,35 @@ public static class TextureMapGenerator
 
         int sectionWidth = textureMapData.Width / widthSections;
         int sectionHeight = textureMapData.Height / heightSections;
+        int sectionAmount = widthSections * heightSections;
 
-        Debug.Log($"Width Section Amount: {widthSections}");
-        Debug.Log($"Height Section Amount: {heightSections}");
+        Texture2D[] chunks = new Texture2D[sectionAmount];
         
-        Texture2D[,] sections = new Texture2D[widthSections, heightSections];
-
-        for (int sx = 0; sx < widthSections; sx++)
+        for (int i = 0, cy = 0; cy < heightSections; cy++)
         {
-            for (int sy = 0; sy < heightSections; sy++)
+            for (int cx = 0; cx < widthSections; cx++, i++)
             {
-                var section = new TextureMapData(new Texture2D(sectionWidth, sectionHeight, TextureFormat.RG16, -1, false));
+                chunks[i] = new Texture2D(sectionWidth, sectionHeight, TextureFormat.R16, -1, false){ name = $"Section: {cx},{cy}" };
+                var chunkPixels = new Color[sectionWidth*sectionHeight];
 
-                for (int px = 0; px < sectionWidth; px++)
+                for (int py = 0; py < sectionHeight; py++)
                 {
-                    for (int py = 0; py < sectionHeight; py++)
+                    for (int px = 0; px < sectionWidth; px++)
                     {
-                        //Debug.Log($"PX: {px}, PY: {py}, RIX: {px + sx * sectionWidth}, ORIY: {py + sy*sectionHeight}");
-                        section.Pixels[px, py] = textureMapData.Pixels[px + sx * sectionWidth, py + sy * sectionHeight];
+                        var oriX = px + cx * sectionWidth;
+                        var oriY = py + cy * sectionHeight;
+                        
+                        var l = px + py * sectionWidth;
+                        chunkPixels[l] = textureMapData.Pixels[oriX, oriY];
                     }
                 }
-
-                var pixels = new Color[section.Pixels.Length];
-                int index = 0;
-            
-                for (int y = 0; y < section.Height; y++)
-                {
-                    for (int x = 0; x < section.Width; x++)
-                    {
-                        pixels[index] = section.Pixels[x, y];
-                        //Debug.Log($"Color: {section.Pixels[x, y]}");
-                        index++;
-                    }
-                }
-
-                //var text = new Texture2D(sectionWidth, sectionHeight, TextureFormat.RG16, -1, false);
                 
-                //section.Texture2D.SetPixels(0, 0, section.Width, section.Height, pixels);
-                
-                //sections[sx, sy] = section.Texture2D;
+                chunks[i].SetPixels(chunkPixels);
+                chunks[i].Apply();
             }
         }
-
-        Texture2D[] sectionArray = new Texture2D[widthSections * heightSections];
         
-        for (int index = 0, y = 0; y < heightSections; y++)
-        {
-            for (int x = 0; x < widthSections; x++, index++)
-            {
-                sectionArray[index] = sections[x, y];
-            }  
-        }
-
-        Debug.Log($"Sections: {sectionArray.Length}");
-        
-        return sectionArray;
-
-
-        //var originalPixels = textureMapData.Texture2D.GetPixels();
-
-        /*for (int sectionIndex = 0; sectionIndex < sections.Length; sectionIndex++)
-        {
-            //sections[sectionIndex] = GenerateBlackTexture(sectionWidth, TextureFormat.RGBA32);
-            sections[sectionIndex] = new Texture2D(sectionWidth, sectionHeight, TextureFormat.RGBA32, -1, false);
-            var sectionPixels = sections[sectionIndex].GetPixels();
-
-            for (int pixelIndex = 0; pixelIndex < sectionPixels.Length; pixelIndex++)
-            {
-                var originalPixelIndex = pixelIndex + sectionWidth*sectionHeight * sectionIndex;
-                sectionPixels[pixelIndex] = originalPixels[originalPixelIndex];
-                
-                //Debug.Log($"Section: {sectionIndex}, PixelColor: {sectionPixels[pixelIndex]}, Original Pixel Color: {originalPixels[originalPixelIndex]}");
-                //Debug.Log($"Section: {sectionIndex}, Pixel: {pixelIndex}, Original Pixel {originalPixelIndex}");
-            }
-            
-            //sections[sectionIndex].SetPixels(sectionPixels);
-        }*/
-
-        //return sections;
+        return chunks;
     }
     
     public static Color CombineColors(params Color[] aColors)

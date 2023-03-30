@@ -33,6 +33,16 @@ public class CustomTerrainData : ParentScriptableObjectAsset
         heightMap = new TextureChildAsset(HeightMapFormat, HeightMapName, this);
         slopeMap = new TextureChildAsset(SlopeMapFormat, SlopeMapName, this);
         textureMap = new TextureChildAsset(TextureMapFormat, TexMapName, this);
+
+        ResetEvents();
+    }
+
+    protected override void ResetEvents()
+    {
+        base.ResetEvents();
+        heightMap.Subscribe(this);
+        slopeMap.Subscribe(this);
+        textureMap.Subscribe(this);
     }
 
     public void GenerateNewHeightMap()

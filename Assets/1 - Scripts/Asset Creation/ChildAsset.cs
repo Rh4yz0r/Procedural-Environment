@@ -62,7 +62,8 @@ public class ChildAsset<T> where T : Object
         this.Parent = parent;
 
         Init();
-        Subscribe();
+        Subscribe(parent);
+        Refresh();
     }
     
     public ChildAsset(string assetName, ParentScriptableObjectAsset parent, bool enableConsoleLogs)
@@ -71,9 +72,9 @@ public class ChildAsset<T> where T : Object
         this.Parent = parent;
 
         Init();
-        Subscribe();
+        Subscribe(parent);
+        Refresh();
         
-
         EnableConsoleLogs = enableConsoleLogs;
     }
 
@@ -95,12 +96,12 @@ public class ChildAsset<T> where T : Object
         Debug.Log($"Validating {AssetName}");
     }
 
-    private void Subscribe()
+    public void Subscribe(ParentScriptableObjectAsset parent)
     {
-        this.Parent.OnValidateEvent += Init;
-        this.Parent.OnValidateEvent += Validate;
-        this.Parent.OnResetEvent += Init;
-        this.Parent.OnDestroyEvent += Destroy;
+        parent.OnValidateEvent += Init;
+        parent.OnValidateEvent += Validate;
+        parent.OnResetEvent += Init;
+        parent.OnDestroyEvent += Destroy;
     }
     
     private void Destroy()
