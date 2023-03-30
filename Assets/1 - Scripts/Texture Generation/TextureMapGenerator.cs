@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public static class TextureMapGenerator
@@ -25,7 +26,25 @@ public static class TextureMapGenerator
         {
             for (int y = 0; y < heightMapData.Height; y++)
             {
-                Color topLeftHP;
+                List<float> redValues = new List<float>();
+
+                float pixelRedValue = heightMapData.Pixels[x, y].r;
+                
+                try { redValues.Add(heightMapData.Pixels[x - 1, y + 1].r - pixelRedValue); }catch{ /*ignored*/ }
+                try { redValues.Add(heightMapData.Pixels[x + 1, y + 1].r - pixelRedValue); }catch{ /*ignored*/ }
+                try { redValues.Add(heightMapData.Pixels[x    , y + 1].r - pixelRedValue); }catch{ /*ignored*/ }
+                try { redValues.Add(heightMapData.Pixels[x - 1, y    ].r - pixelRedValue); }catch{ /*ignored*/ }
+                try { redValues.Add(heightMapData.Pixels[x + 1, y    ].r - pixelRedValue); }catch{ /*ignored*/ }
+                try { redValues.Add(heightMapData.Pixels[x    , y    ].r - pixelRedValue); }catch{ /*ignored*/ }
+                try { redValues.Add(heightMapData.Pixels[x - 1, y - 1].r - pixelRedValue); }catch{ /*ignored*/ }
+                try { redValues.Add(heightMapData.Pixels[x + 1, y - 1].r - pixelRedValue); }catch{ /*ignored*/ }
+                try { redValues.Add(heightMapData.Pixels[x    , y - 1].r - pixelRedValue); }catch{ /*ignored*/ }
+                
+                float averageValue = AverageValue(redValues.ToArray());
+                
+                float highestValue = MaxValue(redValues.ToArray());
+                
+                /*Color topLeftHP;
                 Color topRightHP;
                 Color topMiddleHP;
                 Color middleLeftHP;
@@ -51,13 +70,13 @@ public static class TextureMapGenerator
                     topHeightPixel.r - heightMapData.Pixels[x, y].r, 
                     bottomHeightPixel.r - heightMapData.Pixels[x, y].r });
                 
-                newPixels[x, y] = new Color(highestValue*10, 0, 0, 0);*/
+                newPixels[x, y] = new Color(highestValue*10, 0, 0, 0);#1#
                 
                 /*float averageValue = AverageValue(new float[] { 
                     leftHeightPixel.r - heightMapData.Pixels[x, y].r, 
                     rightHeightPixel.r - heightMapData.Pixels[x, y].r, 
                     topHeightPixel.r - heightMapData.Pixels[x, y].r, 
-                    bottomHeightPixel.r - heightMapData.Pixels[x, y].r });*/
+                    bottomHeightPixel.r - heightMapData.Pixels[x, y].r });#1#
 
                 float averageValue = AverageValue(new float[]
                 {
@@ -69,9 +88,10 @@ public static class TextureMapGenerator
                     bottomLeftHP.r - middleMiddleHP.r,
                     bottomRightHP.r - middleMiddleHP.r,
                     bottomMiddleHP.r - middleMiddleHP.r
-                });
+                });*/
 
-                newPixels[x, y] = new Color(averageValue*50, 0, 0, 0);
+                //newPixels[x, y] = new Color(averageValue*500, 0, 0, 0);
+                newPixels[x, y] = new Color(highestValue*10, 0, 0, 0);
             }
         }
 
@@ -79,53 +99,83 @@ public static class TextureMapGenerator
         return slopeMapData;
     }
 
-    public static TextureMapData SmoothMap(Texture2D map)
+    public static TextureMapData SmoothMap(Texture2D map, int iterations = 1)
     {
         var mapData = new TextureMapData(map);
-        Color[,] newPixels = new Color[mapData.Width, mapData.Height];
-
-        for (int x = 0; x < mapData.Width; x++)
+        
+        int index = 0;
+        while (index < iterations)
         {
-            for (int y = 0; y < mapData.Height; y++)
+            if (EditorUtility.DisplayCancelableProgressBar("Spawning Trees",
+                    $"Busy Spawning Trees: {index}/{iterations}",
+                    (float)index / iterations))
             {
-                Color topLeftPixel;
-                Color topRightPixel;
-                Color topMiddlePixel;
-                Color middleLeftPixel;
-                Color middleRightPixel;
-                Color middleMiddlePixel;
-                Color bottomLeftPixel;
-                Color bottomRightPixel;
-                Color bottomMiddlePixel;
-                
-                try { topLeftPixel = mapData.Pixels[x-1, y+1]; }catch{ topLeftPixel = Color.black; }
-                try { topRightPixel = mapData.Pixels[x+1, y+1]; }catch{ topRightPixel = Color.black; }
-                try { topMiddlePixel = mapData.Pixels[x, y+1]; }catch{ topMiddlePixel = Color.black; }
-                try { middleLeftPixel = mapData.Pixels[x-1, y]; }catch{ middleLeftPixel = Color.black; }
-                try { middleRightPixel = mapData.Pixels[x+1, y]; }catch{ middleRightPixel = Color.black; }
-                try { middleMiddlePixel = mapData.Pixels[x, y]; }catch{ middleMiddlePixel = Color.black; }
-                try { bottomLeftPixel = mapData.Pixels[x-1, y-1]; }catch{ bottomLeftPixel = Color.black; }
-                try { bottomRightPixel = mapData.Pixels[x+1, y-1]; }catch{ bottomRightPixel = Color.black; }
-                try { bottomMiddlePixel = mapData.Pixels[x, y-1]; }catch{ bottomMiddlePixel = Color.black; }
-                
-                float averageValue = AverageValue(new float[]
-                {
-                    topLeftPixel.r,
-                    topRightPixel.r,
-                    topMiddlePixel.r,
-                    middleLeftPixel.r,
-                    middleRightPixel.r,
-                    middleMiddlePixel.r,
-                    bottomLeftPixel.r,
-                    bottomRightPixel.r,
-                    bottomMiddlePixel.r
-                });
-
-                newPixels[x, y] = new Color(averageValue, 0, 0, 0);
+                Debug.LogWarning($"Aborted smoothing at {index} iterations!");
+                break;
             }
-        }
+            
+            Color[,] newPixels = new Color[mapData.Width, mapData.Height];
+            
+            for (int x = 0; x < mapData.Width; x++)
+            {
+                for (int y = 0; y < mapData.Height; y++)
+                {
+                    /*Color topLeftPixel;
+                    Color topRightPixel;
+                    Color topMiddlePixel;
+                    Color middleLeftPixel;
+                    Color middleRightPixel;
+                    Color middleMiddlePixel;
+                    Color bottomLeftPixel;
+                    Color bottomRightPixel;
+                    Color bottomMiddlePixel;
+                
+                    try { topLeftPixel = mapData.Pixels[x-1, y+1]; }catch{ topLeftPixel = Color.black; }
+                    try { topRightPixel = mapData.Pixels[x+1, y+1]; }catch{ topRightPixel = Color.black; }
+                    try { topMiddlePixel = mapData.Pixels[x, y+1]; }catch{ topMiddlePixel = Color.black; }
+                    try { middleLeftPixel = mapData.Pixels[x-1, y]; }catch{ middleLeftPixel = Color.black; }
+                    try { middleRightPixel = mapData.Pixels[x+1, y]; }catch{ middleRightPixel = Color.black; }
+                    try { middleMiddlePixel = mapData.Pixels[x, y]; }catch{ middleMiddlePixel = Color.black; }
+                    try { bottomLeftPixel = mapData.Pixels[x-1, y-1]; }catch{ bottomLeftPixel = Color.black; }
+                    try { bottomRightPixel = mapData.Pixels[x+1, y-1]; }catch{ bottomRightPixel = Color.black; }
+                    try { bottomMiddlePixel = mapData.Pixels[x, y-1]; }catch{ bottomMiddlePixel = Color.black; }
+                
+                    float averageValue = AverageValue(new float[]
+                    {
+                        topLeftPixel.r,
+                        topRightPixel.r,
+                        topMiddlePixel.r,
+                        middleLeftPixel.r,
+                        middleRightPixel.r,
+                        middleMiddlePixel.r,
+                        bottomLeftPixel.r,
+                        bottomRightPixel.r,
+                        bottomMiddlePixel.r
+                    });*/
+                    
+                    List<float> redValues = new List<float>();
 
-        mapData.Pixels = newPixels;
+                    try { redValues.Add(mapData.Pixels[x - 1, y + 1].r); }catch{ /*ignored*/ }
+                    try { redValues.Add(mapData.Pixels[x + 1, y + 1].r); }catch{ /*ignored*/ }
+                    try { redValues.Add(mapData.Pixels[x    , y + 1].r); }catch{ /*ignored*/ }
+                    try { redValues.Add(mapData.Pixels[x - 1, y    ].r); }catch{ /*ignored*/ }
+                    try { redValues.Add(mapData.Pixels[x + 1, y    ].r); }catch{ /*ignored*/ }
+                    try { redValues.Add(mapData.Pixels[x    , y    ].r); }catch{ /*ignored*/ }
+                    try { redValues.Add(mapData.Pixels[x - 1, y - 1].r); }catch{ /*ignored*/ }
+                    try { redValues.Add(mapData.Pixels[x + 1, y - 1].r); }catch{ /*ignored*/ }
+                    try { redValues.Add(mapData.Pixels[x    , y - 1].r); }catch{ /*ignored*/ }
+
+                    float averageValue = AverageValue(redValues.ToArray());
+                    
+                    newPixels[x, y] = new Color(averageValue, 0, 0, 0);
+                }
+            }
+            
+            mapData.Pixels = newPixels;
+            index++;
+        }
+        
+        EditorUtility.ClearProgressBar();
         return mapData;
     }
     

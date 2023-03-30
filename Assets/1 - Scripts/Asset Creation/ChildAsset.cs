@@ -10,6 +10,8 @@ using UnityEditor;
 [Serializable]
 public class ChildAsset<T> where T : Object
 {
+    private bool _initiated = false;
+    
     [HideInInspector] public bool EnableConsoleLogs = false;
 
     [HideInInspector] public ParentScriptableObjectAsset Parent;
@@ -20,7 +22,9 @@ public class ChildAsset<T> where T : Object
         get
         {
             var assets = AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(Parent));
-            return assets.FirstOrDefault(a => a.name == AssetName) as T;
+            var foundAsset = assets.FirstOrDefault(a => a.name == AssetName) as T;
+            if (!foundAsset && _initiated) throw new Exception($"{AssetName}: Asset not found!");
+            return foundAsset;
         }
         set
         {
@@ -35,17 +39,16 @@ public class ChildAsset<T> where T : Object
             
             if (value != null)
             {
-                value.name = AssetName;
-                EditorUtility.CopySerialized(value, asset);
+                SetAsset(value, asset);
 #if UNITY_EDITOR
-                if(EnableConsoleLogs) Debug.Log("Updated");
+                if(EnableConsoleLogs) Debug.Log($"Updated: {AssetName}");
 #endif
             }
             else
             {
                 SetAssetIfValueIsNull(asset);
 #if UNITY_EDITOR
-                if(EnableConsoleLogs) Debug.Log("Updated to null");
+                if(EnableConsoleLogs) Debug.Log($"Updated to null: {AssetName}");
 #endif
             }
         }
@@ -74,7 +77,13 @@ public class ChildAsset<T> where T : Object
         EnableConsoleLogs = enableConsoleLogs;
     }
 
-    protected void SetAssetIfValueIsNull(Object asset)
+    protected virtual void SetAsset(T value, Object asset)
+    {
+        value.name = AssetName;
+        EditorUtility.CopySerialized(value, asset);
+    }
+    
+    protected virtual void SetAssetIfValueIsNull(Object asset)
     {
         EditorUtility.CopySerialized(new Texture2D(0, 0){name = AssetName}, asset);
     }
@@ -103,7 +112,7 @@ public class ChildAsset<T> where T : Object
         //Parent.OnDestroyEvent -= Destroy;
     }
 
-    protected void Create()
+    protected virtual void Create()
     {
         var asset = ObjectFactory.CreateInstance(typeof(T));
         asset.name = AssetName;
@@ -140,6 +149,7 @@ public class ChildAsset<T> where T : Object
         {
             Create();
             _asset = Asset;
+            _initiated = true;
         }
         
         EditorUtility.SetDirty(Parent);

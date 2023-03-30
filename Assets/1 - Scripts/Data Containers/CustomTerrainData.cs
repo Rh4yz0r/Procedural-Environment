@@ -11,46 +11,47 @@ using UnityEditor;
 [CreateAssetMenu(fileName = "New Terrain Data", menuName = "ScriptableObjects/New Terrain Data", order = 1)]
 public class CustomTerrainData : ParentScriptableObjectAsset
 {
-    private readonly Vector2 _textureSize = new Vector2(512, 512); //Should become 513x513
+    private readonly Vector2 _textureSize = new Vector2(512, 512); //Should become 513x513      EDIT: Don't...
     
-    private readonly string heightMapName = "Slope Map";
-    private readonly TextureFormat heightMapFormat = TextureFormat.R16;
-    public ChildAsset<Texture2D> heightMap;
+    private const string HeightMapName = "Height Map";
+    private const TextureFormat HeightMapFormat = TextureFormat.R16;
+    public TextureChildAsset heightMap;
+    [HideInInspector] public int heightSmoothIterations = 1;
+
+    private const string SlopeMapName = "Slope Map";
+    private const TextureFormat SlopeMapFormat = TextureFormat.R16;
+    public TextureChildAsset slopeMap;
     
-    private readonly string slopeMapName = "Height Map";
-    private readonly TextureFormat slopeMapFormat = TextureFormat.R16;
-    public ChildAsset<Texture2D> slopeMap;
-    
-    private readonly string texMapName = "Texture Map";
-    private readonly TextureFormat textureMapFormat = TextureFormat.R16;
-    public ChildAsset<Texture2D> textureMap;
+    private const string TexMapName = "Texture Map";
+    private const TextureFormat TextureMapFormat = TextureFormat.RGBA32;
+    public TextureChildAsset textureMap;
 
     protected override void Awake()
     {
         base.Awake();
 
-        heightMap = new ChildAsset<Texture2D>("Height Map", this);
-        slopeMap = new ChildAsset<Texture2D>("Slope Map", this);
-        textureMap = new ChildAsset<Texture2D>("Texture Map", this);
+        heightMap = new TextureChildAsset(HeightMapFormat, HeightMapName, this);
+        slopeMap = new TextureChildAsset(SlopeMapFormat, SlopeMapName, this);
+        textureMap = new TextureChildAsset(TextureMapFormat, TexMapName, this);
     }
 
     public void GenerateNewHeightMap()
     {
-        Texture2D newHeightMap = new Texture2D((int)_textureSize.x, (int)_textureSize.y, heightMapFormat, -1, false) { name = heightMapName };
+        Texture2D newHeightMap = new Texture2D((int)_textureSize.x, (int)_textureSize.y, HeightMapFormat, -1, false) { name = HeightMapName };
         TextureMapGenerator.SetTextureToColor(newHeightMap, Color.black);
 
         heightMap.Asset = newHeightMap;
         heightMap.Refresh();
     }
     
-    /*public void SmoothHeightMap()
+    public void SmoothHeightMap(int iterations)
     {
         TextureMapData heightMapData = new TextureMapData(heightMap.Asset);
-        heightMapData = TextureMapGenerator.SmoothMap(heightMapData.Texture2D);
+        heightMapData = TextureMapGenerator.SmoothMap(heightMapData.Texture2D, iterations);
 
         heightMap.Asset = heightMapData.Texture2D;
         heightMap.Refresh();
-    }*/
+    }
 
     public void GenerateTextureMap()
     {
@@ -77,6 +78,7 @@ public class TerrainDataScriptableObjectEditor : Editor
 {
     private CustomTerrainData _context;
     //private SerializedProperty _heightMap, _slopeMap;
+    //private SerializedProperty _heightSmoothIterations;
     
     private void Awake()
     {
@@ -86,6 +88,7 @@ public class TerrainDataScriptableObjectEditor : Editor
 
     private void SerializeProperties()
     {
+        //_heightSmoothIterations = serializedObject.FindProperty("heightSmoothIterations");
         //_heightMap = serializedObject.FindProperty("HeightMap");
         //_slopeMap = serializedObject.FindProperty("SlopeMap");
     }
@@ -99,6 +102,14 @@ public class TerrainDataScriptableObjectEditor : Editor
         {
             _context.GenerateNewHeightMap();
         }
+        
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("Smooth Height Map"))
+        {
+            _context.SmoothHeightMap(_context.heightSmoothIterations);
+        }
+        _context.heightSmoothIterations = EditorGUILayout.IntField("Iterations", _context.heightSmoothIterations);
+        GUILayout.EndHorizontal();
         if (GUILayout.Button("Generate Slope Map"))
         {
             _context.GenerateSlopeMap();
@@ -107,6 +118,7 @@ public class TerrainDataScriptableObjectEditor : Editor
         {
             _context.GenerateTextureMap();
         }
+        
 
         //if (GUI.changed) { EditorUtility.SetDirty(_context); }
     }

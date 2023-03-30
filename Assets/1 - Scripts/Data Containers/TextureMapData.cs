@@ -6,7 +6,7 @@ using UnityEngine;
 public class TextureMapData
 {
 #if UNITY_EDITOR
-    private const bool ENABLE_CONSOLE_LOGS = false; //Enabling increases load times drastically.
+    private static bool ENABLE_CONSOLE_LOGS = false; //Enabling increases load times drastically.
 #endif
     
     public Texture2D Texture2D;
@@ -32,6 +32,7 @@ public class TextureMapData
             }
             
             Texture2D.SetPixels(0, 0, Width, Height, pixels);
+            Texture2D.Apply();
         }
     }
     public float[,] RedValues;
