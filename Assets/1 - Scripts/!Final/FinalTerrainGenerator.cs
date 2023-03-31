@@ -1,14 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-[RequireComponent(typeof(TerrainGenerator), typeof(MeshFilter), typeof(MeshRenderer))]
+//[RequireComponent(typeof(TerrainGenerator), typeof(MeshFilter), typeof(MeshRenderer))]
 public class FinalTerrainGenerator : MonoBehaviour
 {
     public CustomTerrainData data;
     public Transform treePrefab;
-    
+
+    public List<Texture2D> chunks;
+
     //private TerrainGenerator _terrainGenerator;
     //private MeshFilter _meshFilter;
     //private MeshRenderer _meshRenderer;
@@ -27,7 +30,8 @@ public class FinalTerrainGenerator : MonoBehaviour
     {
         if (data.heightMap.Asset.width > 256)
         {
-            var chunks = FinalTextureGenerator.ChunkTexture(data.heightMap.Asset, out var chunkOffsets);
+            var chunks = NewChunker.NewChunkTexture(data.heightMap.Asset, out var chunkOffsets);
+            this.chunks = chunks.ToList();
 
             for (int i = 0; i < chunks.Length; i++)
             {
