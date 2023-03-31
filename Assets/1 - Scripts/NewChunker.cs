@@ -103,8 +103,8 @@ public static class NewChunker
     {
         #region Create Chunk Grid
         
-        int maxChunkWidth = 256;
-        int maxChunkHeight = 256;
+        int maxChunkWidth = 128;
+        int maxChunkHeight = 128;
         
         int originalWidth = textureMapData.Width;
         int originalHeight = textureMapData.Height;
@@ -156,31 +156,28 @@ public static class NewChunker
 
                 Color[,] newPixels = new Color[chunkMapData.Width, chunkMapData.Height];
 
-                for (int y = 0; y < newHeight+1; y++)
-                {
-                    for (int x = 0; x < newWidth+1; x++)
-                    {
-                        int chunkStartX = x+1;
-                        int chunkStartY = y+1;
+                int xLength = newExtendedWidth;
+                int yLength = newExtendedHeight;
 
-                        //if (chunkGridXIndex != 0) chunkStartX--;
-                        //if (chunkGridYIndex != 0) chunkStartY--;
+                if (chunkGridXIndex == 0 || chunkGridXIndex == chunkGridXSize - 1) xLength--;
+                if (chunkGridYIndex == 0 || chunkGridYIndex == chunkGridYSize - 1) yLength--;
+
+                for (int y = 0; y < yLength; y++)
+                {
+                    for (int x = 0; x < xLength; x++)
+                    {
+                        int chunkStartX = x;
+                        int chunkStartY = y;
                         
                         int oriStartX = x + (chunkGridXIndex * newWidth);
                         int oriStartY = y + (chunkGridYIndex * newHeight);
+
+                        if (chunkGridXIndex == 0) chunkStartX++;
+                        if (chunkGridYIndex == 0) chunkStartY++;
                         
                         if (chunkGridXIndex != 0) oriStartX--;
-                        if (chunkGridYIndex != 0) oriStartY--; //<---- Ended here
+                        if (chunkGridYIndex != 0) oriStartY--;
 
-                        /*if (chunkGridXIndex == 1)
-                        { Debug.Log("Now"); }*/
-
-                        if (x == 255)
-                        { Debug.Log("NOW"); }
-
-                        if (y == 255)
-                        { Debug.Log("NowY"); }
-                        
                         newPixels[chunkStartX, chunkStartY] = textureMapData.Pixels[oriStartX, oriStartY];
                     }
                 }
