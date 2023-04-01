@@ -9,8 +9,10 @@ public class FinalTerrainGenerator : MonoBehaviour
 {
     public CustomTerrainData data;
     public Transform treePrefab;
+    public Transform shrubPrefab;
 
     public List<Texture2D> chunks;
+    public List<Texture2D> chunkNormals;
 
     //private TerrainGenerator _terrainGenerator;
     //private MeshFilter _meshFilter;
@@ -32,6 +34,7 @@ public class FinalTerrainGenerator : MonoBehaviour
         {
             var chunks = NewChunker.NewChunkTexture(data.heightMap.Asset, out var chunkOffsets);
             this.chunks = chunks.ToList();
+            this.chunkNormals.Clear();
 
             for (int i = 0; i < chunks.Length; i++)
             {
@@ -40,19 +43,25 @@ public class FinalTerrainGenerator : MonoBehaviour
                 var chunkTextureMap = FinalTextureGenerator.GenerateTextureMap(chunkHeightMap, chunkSlopeMap.Texture2D);
                 
                 var terrainChunkGameObject = CreateTerrainGameObject($"Chunk: {i}", transform.position+chunkOffsets[i]);
-                var treeChunkGameObject = CreateTreeLibraryGameObject($"Tree Chunk: {i}", transform.position + chunkOffsets[i]);
-                LoadTerrainMesh(chunkHeightMap, chunkSlopeMap.Texture2D, chunkTextureMap.Texture2D, terrainChunkGameObject);
+                var treeChunkGameObject = CreateLibraryGameObject($"Tree Chunk: {i}", transform.position + chunkOffsets[i]);
+                var shrubChunkGameObject = CreateLibraryGameObject($"Shrub Chunk: {i}", transform.position + chunkOffsets[i]);
+                LoadTerrainMesh(chunkHeightMap, chunkSlopeMap.Texture2D, chunkTextureMap.Texture2D, terrainChunkGameObject, out var normalMap);
+                chunkNormals.Add(normalMap);
                 LoadTextures(chunkHeightMap, chunkSlopeMap.Texture2D, chunkTextureMap.Texture2D, terrainChunkGameObject);
                 LoadTrees(chunkHeightMap, chunkSlopeMap.Texture2D, chunkTextureMap.Texture2D, terrainChunkGameObject, treeChunkGameObject);
+                LoadShrubs(chunkHeightMap, chunkSlopeMap.Texture2D, chunkTextureMap.Texture2D, terrainChunkGameObject, shrubChunkGameObject, normalMap);
             }
         }
         else
         {
             var terrainGameObject = CreateTerrainGameObject("New Terrain", transform.position);
-            var treeChunkGameObject = CreateTreeLibraryGameObject($"New Trees", transform.position);
-            LoadTerrainMesh(data.heightMap.Asset, data.slopeMap.Asset, data.textureMap.Asset, terrainGameObject);
+            var treeChunkGameObject = CreateLibraryGameObject($"New Trees", transform.position);
+            var shrubChunkGameObject = CreateLibraryGameObject($"New Shrubs", transform.position);
+            LoadTerrainMesh(data.heightMap.Asset, data.slopeMap.Asset, data.textureMap.Asset, terrainGameObject, out var normalMap);
+            chunkNormals.Add(normalMap);
             LoadTextures(data.heightMap.Asset, data.slopeMap.Asset, data.textureMap.Asset, terrainGameObject);
             LoadTrees(data.heightMap.Asset, data.slopeMap.Asset, data.textureMap.Asset, terrainGameObject, treeChunkGameObject);
+            LoadShrubs(data.heightMap.Asset, data.slopeMap.Asset, data.textureMap.Asset, terrainGameObject, shrubChunkGameObject, normalMap);
         }
     }
 
@@ -65,14 +74,19 @@ public class FinalTerrainGenerator : MonoBehaviour
         return newTerrainGameObject;
     }
     
-    public GameObject CreateTreeLibraryGameObject(string gameObjectName, Vector3 position)
+    public GameObject CreateLibraryGameObject(string gameObjectName, Vector3 position)
     {
         GameObject newTerrainGameObject = new GameObject(){name = gameObjectName, transform = { parent = transform, position = position}};
         return newTerrainGameObject;
     }
-    
-    public void LoadTerrainMesh(Texture2D heightMapTexture, Texture2D slopeMapTexture, Texture2D groundTexture, GameObject terrainGameObject)
+
+    public void LoadTerrainMesh(Texture2D heightMapTexture, Texture2D slopeMapTexture, Texture2D groundTexture, GameObject terrainGameObject, out Texture2D normalTexture)
     {
+        Texture2D normalMap = new Texture2D(heightMapTexture.width, heightMapTexture.height, TextureFormat.RGBA32, -1,
+            false);
+        TextureMapData normalMapData = new TextureMapData(normalMap);
+        var normalPixels = normalMapData.Pixels;
+        
         //Determine size
         var width = heightMapTexture.width - 1;
         var height = heightMapTexture.height - 1;
@@ -112,6 +126,17 @@ public class FinalTerrainGenerator : MonoBehaviour
         }
         mesh.triangles = triangles;
         mesh.RecalculateNormals();
+        
+        for (int i = 0, y = 0; y < height+1; y++) 
+        {
+            for (int x = 0; x < width+1; x++, i++) 
+            {
+                normalPixels[x, y] = new Color(mesh.normals[i].x, mesh.normals[i].y, mesh.normals[i].z);
+            }
+        }
+        normalMapData.Pixels = normalPixels;
+
+        normalTexture = normalMapData.Texture2D;
     }
 
     public void LoadTextures(Texture2D heightMapTexture, Texture2D slopeMapTexture, Texture2D groundTexture, GameObject terrainGameObject)
@@ -159,6 +184,36 @@ public class FinalTerrainGenerator : MonoBehaviour
             else continue;
             
             index++;
+        }
+        
+        EditorUtility.ClearProgressBar();
+    }
+
+    public void LoadShrubs(Texture2D heightMapTexture, Texture2D slopeMapTexture, Texture2D groundTexture, GameObject terrainGameObject, GameObject shrubLibraryGameObject, Texture2D normalMap)
+    {
+        float minConstraintShrub = 0.7f;
+        
+        TextureMapData heightmap = new TextureMapData(heightMapTexture);
+        TextureMapData groundTextureData = new TextureMapData(groundTexture);
+        TextureMapData normalMapData = new TextureMapData(normalMap);
+        
+        for (int y = 0; y < groundTexture.height; y++)
+        {
+            for (int x = 0; x < groundTexture.width; x++)
+            {
+                if (EditorUtility.DisplayCancelableProgressBar("Spawning Shrubs", $"Busy Spawning Shrubs: {(x + (y * groundTexture.height))}/{groundTexture.width * groundTexture.height}",
+                        (float)(x + (y * groundTexture.height)) / groundTexture.width * groundTexture.height)) break;
+
+                var rng = Random.Range(0, 2);
+                
+                if (groundTextureData.Pixels[x, y].g > minConstraintShrub && rng == 1)
+                {
+                    var shrub = Instantiate(shrubPrefab, new Vector3(x+shrubLibraryGameObject.transform.position.x, (heightmap.Pixels[x, y].r * heightMapTexture.width) + shrubLibraryGameObject.transform.position.y, y+shrubLibraryGameObject.transform.position.z),
+                        shrubPrefab.rotation, shrubLibraryGameObject.transform);
+                    var normalPixel = normalMapData.Pixels[x, y];
+                    shrub.up = new Vector3(normalPixel.r, normalPixel.g, normalPixel.b);
+                }
+            }
         }
         
         EditorUtility.ClearProgressBar();
