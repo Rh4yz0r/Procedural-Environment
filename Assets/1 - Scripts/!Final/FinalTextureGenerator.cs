@@ -15,10 +15,10 @@ public static class FinalTextureGenerator
         var heightMapData = new TextureMapData(heightMap);
         var slopeMapData = new TextureMapData(slopeMap);
         Color[,] newPixels = new Color[slopeMapData.Width, slopeMapData.Height];
-
-        for (int x = 0; x < heightMapData.Width; x++)
+        
+        for (int y = 0; y < heightMapData.Height; y++)
         {
-            for (int y = 0; y < heightMapData.Height; y++)
+            for (int x = 0; x < heightMapData.Width; x++)
             {
                 List<float> redValues = new List<float>();
 
@@ -37,6 +37,9 @@ public static class FinalTextureGenerator
                 //float averageValue = MathExtensions.AverageValue(redValues.ToArray());
                 //newPixels[x, y] = new Color(averageValue*500, 0, 0, 0);
                 
+                //Check de value van de vorige chunk of de volgende chunk.
+                //Als niet 9 in array, breek dan uit deze functie, aangezien we aan de zijkant zitten
+
                 float highestValue = MathExtensions.MaxValue(redValues.ToArray());
                 newPixels[x, y] = new Color(highestValue*10, 0, 0, 0);
             }

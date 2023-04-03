@@ -12,7 +12,9 @@ public class FinalTerrainGenerator : MonoBehaviour
     public Transform shrubPrefab;
 
     public List<Texture2D> chunks;
+    public List<Texture2D> chunkSlopes;
     public List<Texture2D> chunkNormals;
+    public List<Texture2D> chunkTextures;
 
     //private TerrainGenerator _terrainGenerator;
     //private MeshFilter _meshFilter;
@@ -30,38 +32,55 @@ public class FinalTerrainGenerator : MonoBehaviour
     [ContextMenu("Load Terrain")]
     public void Load()
     {
+        this.chunks.Clear();
+        this.chunkNormals.Clear();
+        this.chunkSlopes.Clear();
+        this.chunkTextures.Clear();
+        
+        
         if (data.heightMap.Asset.width > 256)
         {
-            var chunks = NewChunker.NewChunkTexture(data.heightMap.Asset, out var chunkOffsets);
-            this.chunks = chunks.ToList();
-            this.chunkNormals.Clear();
+            var heightMapChunks = NewChunker.NewChunkTexture(data.heightMap.Asset, out var chunkOffsets);
+            this.chunks = heightMapChunks.ToList();
 
-            for (int i = 0; i < chunks.Length; i++)
+            var slopeMapChunks = NewChunker.NewChunkTexture(data.slopeMap.Asset, out var redundant);
+            this.chunkSlopes = slopeMapChunks.ToList();
+
+            for (int i = 0; i < heightMapChunks.Length; i++)
             {
-                var chunkHeightMap = chunks[i];
-                var chunkSlopeMap = FinalTextureGenerator.GenerateSlopeMap(chunkHeightMap);
-                var chunkTextureMap = FinalTextureGenerator.GenerateTextureMap(chunkHeightMap, chunkSlopeMap.Texture2D);
+                var chunkHeightMap = heightMapChunks[i];
+                var chunkSlopeMap = slopeMapChunks[i];
+                //var chunkSlopeMap = FinalTextureGenerator.GenerateSlopeMap(chunkHeightMap);
+                //chunkSlopes.Add(chunkSlopeMap.Texture2D);
+                var chunkTextureMap = FinalTextureGenerator.GenerateTextureMap(chunkHeightMap, chunkSlopeMap);
+                chunkTextures.Add(chunkTextureMap.Texture2D);
                 
-                var terrainChunkGameObject = CreateTerrainGameObject($"Chunk: {i}", transform.position+chunkOffsets[i]);
+                var terrainChunkGameObject = CreateTerrainGameObject($"Chunk: {i}", transform.position + chunkOffsets[i]);
                 var treeChunkGameObject = CreateLibraryGameObject($"Tree Chunk: {i}", transform.position + chunkOffsets[i]);
                 var shrubChunkGameObject = CreateLibraryGameObject($"Shrub Chunk: {i}", transform.position + chunkOffsets[i]);
-                LoadTerrainMesh(chunkHeightMap, chunkSlopeMap.Texture2D, chunkTextureMap.Texture2D, terrainChunkGameObject, out var normalMap);
+                LoadTerrainMesh(chunkHeightMap, chunkSlopeMap, chunkTextureMap.Texture2D, terrainChunkGameObject, out var normalMap);
                 chunkNormals.Add(normalMap);
-                LoadTextures(chunkHeightMap, chunkSlopeMap.Texture2D, chunkTextureMap.Texture2D, terrainChunkGameObject);
-                LoadTrees(chunkHeightMap, chunkSlopeMap.Texture2D, chunkTextureMap.Texture2D, terrainChunkGameObject, treeChunkGameObject);
-                LoadShrubs(chunkHeightMap, chunkSlopeMap.Texture2D, chunkTextureMap.Texture2D, terrainChunkGameObject, shrubChunkGameObject, normalMap);
+                LoadTextures(chunkHeightMap, chunkSlopeMap, chunkTextureMap.Texture2D, terrainChunkGameObject);
+                LoadTrees(chunkHeightMap, chunkSlopeMap, chunkTextureMap.Texture2D, terrainChunkGameObject, treeChunkGameObject);
+                LoadShrubs(chunkHeightMap, chunkSlopeMap, chunkTextureMap.Texture2D, terrainChunkGameObject, shrubChunkGameObject, normalMap);
             }
         }
         else
         {
+            var chunkSlopeMap = FinalTextureGenerator.GenerateSlopeMap(data.heightMap.Asset);
+            var chunkTextureMap = FinalTextureGenerator.GenerateTextureMap(data.heightMap.Asset, data.slopeMap.Asset);
+            chunks.Add(data.heightMap.Asset);
+            chunkSlopes.Add(chunkSlopeMap.Texture2D);
+            chunkTextures.Add(chunkTextureMap.Texture2D);
+            
             var terrainGameObject = CreateTerrainGameObject("New Terrain", transform.position);
             var treeChunkGameObject = CreateLibraryGameObject($"New Trees", transform.position);
             var shrubChunkGameObject = CreateLibraryGameObject($"New Shrubs", transform.position);
-            LoadTerrainMesh(data.heightMap.Asset, data.slopeMap.Asset, data.textureMap.Asset, terrainGameObject, out var normalMap);
+            LoadTerrainMesh(data.heightMap.Asset, chunkSlopeMap.Texture2D, chunkTextureMap.Texture2D, terrainGameObject, out var normalMap);
             chunkNormals.Add(normalMap);
-            LoadTextures(data.heightMap.Asset, data.slopeMap.Asset, data.textureMap.Asset, terrainGameObject);
-            LoadTrees(data.heightMap.Asset, data.slopeMap.Asset, data.textureMap.Asset, terrainGameObject, treeChunkGameObject);
-            LoadShrubs(data.heightMap.Asset, data.slopeMap.Asset, data.textureMap.Asset, terrainGameObject, shrubChunkGameObject, normalMap);
+            LoadTextures(data.heightMap.Asset, chunkSlopeMap.Texture2D, chunkTextureMap.Texture2D, terrainGameObject);
+            LoadTrees(data.heightMap.Asset, chunkSlopeMap.Texture2D, chunkTextureMap.Texture2D, terrainGameObject, treeChunkGameObject);
+            LoadShrubs(data.heightMap.Asset, chunkSlopeMap.Texture2D, chunkTextureMap.Texture2D, terrainGameObject, shrubChunkGameObject, normalMap);
         }
     }
 
@@ -105,6 +124,9 @@ public class FinalTerrainGenerator : MonoBehaviour
         {
             for (int x = 0; x < width+1; x++, i++) 
             {
+                EditorUtility.DisplayProgressBar("Creating terrain", $"Calculating vertices & uv: {(x + (y * width))}/{(width+1) * (height+1)}",
+                        (float)(x + (y * (width+1))) / ((width+1) * (height+1)));
+                
                 _terrainMeshVertices[i] = new Vector3(x, heightMap.Pixels[x, y].r*heightMap.Width, y);
                 uv[i] = new Vector2((float)x / width, (float)y / height);
             }
@@ -118,6 +140,9 @@ public class FinalTerrainGenerator : MonoBehaviour
         {
             for (int x = 0; x < width; x++, triIndex += 6, vertIndex++) 
             {
+                EditorUtility.DisplayProgressBar("Creating terrain", $"Calculating triangles: {(x + (y * width))}/{width * height}",
+                    (float)(x + (y * width)) / (width * height));
+                
                 triangles[triIndex] = vertIndex;
                 triangles[triIndex + 3] = triangles[triIndex + 2] = vertIndex + 1;
                 triangles[triIndex + 4] = triangles[triIndex + 1] = vertIndex + width + 1;
@@ -131,12 +156,16 @@ public class FinalTerrainGenerator : MonoBehaviour
         {
             for (int x = 0; x < width+1; x++, i++) 
             {
+                EditorUtility.DisplayProgressBar("Creating terrain", $"Calculating normals: {(x + (y * width))}/{(width+1) * (height+1)}",
+                    (float)(x + (y * (width+1))) / ((width+1) * (height+1)));
+                
                 normalPixels[x, y] = new Color(mesh.normals[i].x, mesh.normals[i].y, mesh.normals[i].z);
             }
         }
         normalMapData.Pixels = normalPixels;
 
         normalTexture = normalMapData.Texture2D;
+        EditorUtility.ClearProgressBar();
     }
 
     public void LoadTextures(Texture2D heightMapTexture, Texture2D slopeMapTexture, Texture2D groundTexture, GameObject terrainGameObject)

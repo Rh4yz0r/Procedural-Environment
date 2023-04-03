@@ -48,7 +48,7 @@ public class CustomTerrainData : ParentScriptableObjectAsset
     public void GenerateNewHeightMap()
     {
         Texture2D newHeightMap = new Texture2D((int)_textureSize.x, (int)_textureSize.y, HeightMapFormat, -1, false) { name = HeightMapName };
-        TextureMapGenerator.SetTextureToColor(newHeightMap, Color.black);
+        FinalTextureGenerator.SetTextureToColor(newHeightMap, Color.black);
 
         heightMap.Asset = newHeightMap;
         heightMap.Refresh();
@@ -57,7 +57,7 @@ public class CustomTerrainData : ParentScriptableObjectAsset
     public void SmoothHeightMap(int iterations)
     {
         TextureMapData heightMapData = new TextureMapData(heightMap.Asset);
-        heightMapData = TextureMapGenerator.SmoothMap(heightMapData.Texture2D, iterations);
+        heightMapData = FinalTextureGenerator.SmoothMap(heightMapData.Texture2D, iterations);
 
         heightMap.Asset = heightMapData.Texture2D;
         heightMap.Refresh();
@@ -65,7 +65,7 @@ public class CustomTerrainData : ParentScriptableObjectAsset
 
     public void GenerateTextureMap()
     {
-        TextureMapData newTextureMap = TextureMapGenerator.GenerateTextureMap(heightMap.Asset, slopeMap.Asset);
+        TextureMapData newTextureMap = FinalTextureGenerator.GenerateTextureMap(heightMap.Asset, slopeMap.Asset);
         
         textureMap.Asset = newTextureMap.Texture2D;
         textureMap.Refresh();
@@ -73,8 +73,8 @@ public class CustomTerrainData : ParentScriptableObjectAsset
     
     public void GenerateSlopeMap()
     {
-        TextureMapData newSlopeMap = TextureMapGenerator.GenerateSlopeMap(heightMap.Asset);
-        newSlopeMap = TextureMapGenerator.SmoothMap(newSlopeMap.Texture2D);
+        TextureMapData newSlopeMap = FinalTextureGenerator.GenerateSlopeMap(heightMap.Asset);
+        newSlopeMap = FinalTextureGenerator.SmoothMap(newSlopeMap.Texture2D);
         
         slopeMap.Asset = newSlopeMap.Texture2D;
         slopeMap.Refresh();

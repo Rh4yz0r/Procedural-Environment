@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-public static class TextureMapGenerator
+/*public static class TextureMapGenerator
 {
     public static TextureMapData GenerateRandomHeightMap(int resolution)
     {
@@ -30,15 +30,15 @@ public static class TextureMapGenerator
 
                 float pixelRedValue = heightMapData.Pixels[x, y].r;
                 
-                try { redValues.Add(heightMapData.Pixels[x - 1, y + 1].r - pixelRedValue); }catch{ /*ignored*/ }
-                try { redValues.Add(heightMapData.Pixels[x + 1, y + 1].r - pixelRedValue); }catch{ /*ignored*/ }
-                try { redValues.Add(heightMapData.Pixels[x    , y + 1].r - pixelRedValue); }catch{ /*ignored*/ }
-                try { redValues.Add(heightMapData.Pixels[x - 1, y    ].r - pixelRedValue); }catch{ /*ignored*/ }
-                try { redValues.Add(heightMapData.Pixels[x + 1, y    ].r - pixelRedValue); }catch{ /*ignored*/ }
-                try { redValues.Add(heightMapData.Pixels[x    , y    ].r - pixelRedValue); }catch{ /*ignored*/ }
-                try { redValues.Add(heightMapData.Pixels[x - 1, y - 1].r - pixelRedValue); }catch{ /*ignored*/ }
-                try { redValues.Add(heightMapData.Pixels[x + 1, y - 1].r - pixelRedValue); }catch{ /*ignored*/ }
-                try { redValues.Add(heightMapData.Pixels[x    , y - 1].r - pixelRedValue); }catch{ /*ignored*/ }
+                try { redValues.Add(heightMapData.Pixels[x - 1, y + 1].r - pixelRedValue); }catch{ /*ignored#1# }
+                try { redValues.Add(heightMapData.Pixels[x + 1, y + 1].r - pixelRedValue); }catch{ /*ignored#1# }
+                try { redValues.Add(heightMapData.Pixels[x    , y + 1].r - pixelRedValue); }catch{ /*ignored#1# }
+                try { redValues.Add(heightMapData.Pixels[x - 1, y    ].r - pixelRedValue); }catch{ /*ignored#1# }
+                try { redValues.Add(heightMapData.Pixels[x + 1, y    ].r - pixelRedValue); }catch{ /*ignored#1# }
+                try { redValues.Add(heightMapData.Pixels[x    , y    ].r - pixelRedValue); }catch{ /*ignored#1# }
+                try { redValues.Add(heightMapData.Pixels[x - 1, y - 1].r - pixelRedValue); }catch{ /*ignored#1# }
+                try { redValues.Add(heightMapData.Pixels[x + 1, y - 1].r - pixelRedValue); }catch{ /*ignored#1# }
+                try { redValues.Add(heightMapData.Pixels[x    , y - 1].r - pixelRedValue); }catch{ /*ignored#1# }
                 
                 float averageValue = AverageValue(redValues.ToArray());
                 
@@ -70,13 +70,13 @@ public static class TextureMapGenerator
                     topHeightPixel.r - heightMapData.Pixels[x, y].r, 
                     bottomHeightPixel.r - heightMapData.Pixels[x, y].r });
                 
-                newPixels[x, y] = new Color(highestValue*10, 0, 0, 0);#1#
+                newPixels[x, y] = new Color(highestValue*10, 0, 0, 0);#2#
                 
                 /*float averageValue = AverageValue(new float[] { 
                     leftHeightPixel.r - heightMapData.Pixels[x, y].r, 
                     rightHeightPixel.r - heightMapData.Pixels[x, y].r, 
                     topHeightPixel.r - heightMapData.Pixels[x, y].r, 
-                    bottomHeightPixel.r - heightMapData.Pixels[x, y].r });#1#
+                    bottomHeightPixel.r - heightMapData.Pixels[x, y].r });#2#
 
                 float averageValue = AverageValue(new float[]
                 {
@@ -88,7 +88,7 @@ public static class TextureMapGenerator
                     bottomLeftHP.r - middleMiddleHP.r,
                     bottomRightHP.r - middleMiddleHP.r,
                     bottomMiddleHP.r - middleMiddleHP.r
-                });*/
+                });#1#
 
                 //newPixels[x, y] = new Color(averageValue*500, 0, 0, 0);
                 newPixels[x, y] = new Color(highestValue*10, 0, 0, 0);
@@ -151,19 +151,19 @@ public static class TextureMapGenerator
                         bottomLeftPixel.r,
                         bottomRightPixel.r,
                         bottomMiddlePixel.r
-                    });*/
+                    });#1#
                     
                     List<float> redValues = new List<float>();
 
-                    try { redValues.Add(mapData.Pixels[x - 1, y + 1].r); }catch{ /*ignored*/ }
-                    try { redValues.Add(mapData.Pixels[x + 1, y + 1].r); }catch{ /*ignored*/ }
-                    try { redValues.Add(mapData.Pixels[x    , y + 1].r); }catch{ /*ignored*/ }
-                    try { redValues.Add(mapData.Pixels[x - 1, y    ].r); }catch{ /*ignored*/ }
-                    try { redValues.Add(mapData.Pixels[x + 1, y    ].r); }catch{ /*ignored*/ }
-                    try { redValues.Add(mapData.Pixels[x    , y    ].r); }catch{ /*ignored*/ }
-                    try { redValues.Add(mapData.Pixels[x - 1, y - 1].r); }catch{ /*ignored*/ }
-                    try { redValues.Add(mapData.Pixels[x + 1, y - 1].r); }catch{ /*ignored*/ }
-                    try { redValues.Add(mapData.Pixels[x    , y - 1].r); }catch{ /*ignored*/ }
+                    try { redValues.Add(mapData.Pixels[x - 1, y + 1].r); }catch{ /*ignored#1# }
+                    try { redValues.Add(mapData.Pixels[x + 1, y + 1].r); }catch{ /*ignored#1# }
+                    try { redValues.Add(mapData.Pixels[x    , y + 1].r); }catch{ /*ignored#1# }
+                    try { redValues.Add(mapData.Pixels[x - 1, y    ].r); }catch{ /*ignored#1# }
+                    try { redValues.Add(mapData.Pixels[x + 1, y    ].r); }catch{ /*ignored#1# }
+                    try { redValues.Add(mapData.Pixels[x    , y    ].r); }catch{ /*ignored#1# }
+                    try { redValues.Add(mapData.Pixels[x - 1, y - 1].r); }catch{ /*ignored#1# }
+                    try { redValues.Add(mapData.Pixels[x + 1, y - 1].r); }catch{ /*ignored#1# }
+                    try { redValues.Add(mapData.Pixels[x    , y - 1].r); }catch{ /*ignored#1# }
 
                     float averageValue = AverageValue(redValues.ToArray());
                     
@@ -311,4 +311,4 @@ public static class TextureMapGenerator
         //Debug.Log(sum / floatArray.Length);
         return sum / floatArray.Length;
     }
-}
+}*/

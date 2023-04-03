@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class ChunkingTester : MonoBehaviour
 {
-    public List<GameObject> chunkPlanes;
+    /*public List<GameObject> chunkPlanes;
     public Texture2D Texture512;
     public List<Texture2D> newTexes;
 
@@ -24,5 +24,5 @@ public class ChunkingTester : MonoBehaviour
             chunkMat.name = $"Chunk{i}";
             meshRenderer.material = chunkMat;
         }
-    }
+    }*/
 }

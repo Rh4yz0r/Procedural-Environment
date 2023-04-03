@@ -139,8 +139,8 @@ public static class NewChunker
         int newWidth = textureMapData.Width / chunkGridXSize;
         int newHeight = textureMapData.Height / chunkGridYSize;
 
-        int newExtendedWidth = newWidth + 2;
-        int newExtendedHeight = newHeight + 2;
+        int newExtendedWidth = newWidth + 1;
+        int newExtendedHeight = newHeight + 1; //<--------- increase for increase overlap? 2 overlaps by 1
 
         TextureFormat textureFormat = TextureFormat.R16;
         int mipCount = -1;
