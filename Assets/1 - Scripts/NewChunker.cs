@@ -142,15 +142,16 @@ public static class NewChunker
         int newExtendedWidth = newWidth + 1;
         int newExtendedHeight = newHeight + 1; //<--------- increase for increase overlap? 2 overlaps by 1
 
-        TextureFormat textureFormat = TextureFormat.R16;
+        TextureFormat textureFormat = textureMapData.Texture2D.format;
         int mipCount = -1;
         bool linear = false;
+        TextureWrapMode wrapMode = textureMapData.Texture2D.wrapMode;
 
         for (int chunkGridYIndex = 0; chunkGridYIndex < chunkGridYSize; chunkGridYIndex++)
         {
             for (int chunkGridXIndex = 0; chunkGridXIndex < chunkGridXSize; chunkGridXIndex++)
             {
-                Texture2D chunk = new Texture2D(newExtendedWidth, newExtendedHeight, textureFormat, mipCount, linear){name = $"Chunk: {chunkGridXIndex},{chunkGridYIndex}"};
+                Texture2D chunk = new Texture2D(newExtendedWidth, newExtendedHeight, textureFormat, mipCount, linear){name = $"Chunk: {chunkGridXIndex},{chunkGridYIndex}", wrapMode = wrapMode};
                 FinalTextureGenerator.SetTextureToColor(chunk, Color.black);
                 TextureMapData chunkMapData = new TextureMapData(chunk);
 

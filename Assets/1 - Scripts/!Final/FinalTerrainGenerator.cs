@@ -9,6 +9,7 @@ public class FinalTerrainGenerator : MonoBehaviour
 {
     public CustomTerrainData data;
     public Transform treePrefab;
+    public int treeAmount = 100;
     public Transform shrubPrefab;
 
     public List<Texture2D> chunks;
@@ -43,32 +44,38 @@ public class FinalTerrainGenerator : MonoBehaviour
             var heightMapChunks = NewChunker.NewChunkTexture(data.heightMap.Asset, out var chunkOffsets);
             this.chunks = heightMapChunks.ToList();
 
-            var slopeMapChunks = NewChunker.NewChunkTexture(data.slopeMap.Asset, out var redundant);
+            var slopeMap = FinalTextureGenerator.NewSlopeMap(data.heightMap.Asset);
+            var slopeMapChunks = NewChunker.NewChunkTexture(slopeMap, out var redundant);
             this.chunkSlopes = slopeMapChunks.ToList();
+
+            var textureMap = FinalTextureGenerator.GenerateTextureMap(data.heightMap.Asset, slopeMap.Texture2D);
+            var textureMapChunks = NewChunker.NewChunkTexture(textureMap, out var redundant2);
+            this.chunkTextures = textureMapChunks.ToList();
 
             for (int i = 0; i < heightMapChunks.Length; i++)
             {
                 var chunkHeightMap = heightMapChunks[i];
                 var chunkSlopeMap = slopeMapChunks[i];
+                var chunkTextureMap = textureMapChunks[i];
                 //var chunkSlopeMap = FinalTextureGenerator.GenerateSlopeMap(chunkHeightMap);
                 //chunkSlopes.Add(chunkSlopeMap.Texture2D);
-                var chunkTextureMap = FinalTextureGenerator.GenerateTextureMap(chunkHeightMap, chunkSlopeMap);
-                chunkTextures.Add(chunkTextureMap.Texture2D);
+                //var chunkTextureMap = FinalTextureGenerator.GenerateTextureMap(chunkHeightMap, chunkSlopeMap);
+                //chunkTextures.Add(chunkTextureMap.Texture2D);
                 
                 var terrainChunkGameObject = CreateTerrainGameObject($"Chunk: {i}", transform.position + chunkOffsets[i]);
                 var treeChunkGameObject = CreateLibraryGameObject($"Tree Chunk: {i}", transform.position + chunkOffsets[i]);
                 var shrubChunkGameObject = CreateLibraryGameObject($"Shrub Chunk: {i}", transform.position + chunkOffsets[i]);
-                LoadTerrainMesh(chunkHeightMap, chunkSlopeMap, chunkTextureMap.Texture2D, terrainChunkGameObject, out var normalMap);
+                LoadTerrainMesh(chunkHeightMap, chunkSlopeMap, chunkTextureMap, terrainChunkGameObject, out var normalMap);
                 chunkNormals.Add(normalMap);
-                LoadTextures(chunkHeightMap, chunkSlopeMap, chunkTextureMap.Texture2D, terrainChunkGameObject);
-                LoadTrees(chunkHeightMap, chunkSlopeMap, chunkTextureMap.Texture2D, terrainChunkGameObject, treeChunkGameObject);
-                LoadShrubs(chunkHeightMap, chunkSlopeMap, chunkTextureMap.Texture2D, terrainChunkGameObject, shrubChunkGameObject, normalMap);
+                LoadTextures(chunkHeightMap, chunkSlopeMap, chunkTextureMap, terrainChunkGameObject);
+                LoadTrees(chunkHeightMap, chunkSlopeMap, chunkTextureMap, terrainChunkGameObject, treeChunkGameObject);
+                LoadShrubs(chunkHeightMap, chunkSlopeMap, chunkTextureMap, terrainChunkGameObject, shrubChunkGameObject, normalMap);
             }
         }
         else
         {
-            var chunkSlopeMap = FinalTextureGenerator.GenerateSlopeMap(data.heightMap.Asset);
-            var chunkTextureMap = FinalTextureGenerator.GenerateTextureMap(data.heightMap.Asset, data.slopeMap.Asset);
+            var chunkSlopeMap = FinalTextureGenerator.NewSlopeMap(data.heightMap.Asset);
+            var chunkTextureMap = FinalTextureGenerator.GenerateTextureMap(data.heightMap.Asset, chunkSlopeMap.Texture2D);
             chunks.Add(data.heightMap.Asset);
             chunkSlopes.Add(chunkSlopeMap.Texture2D);
             chunkTextures.Add(chunkTextureMap.Texture2D);
@@ -180,7 +187,7 @@ public class FinalTerrainGenerator : MonoBehaviour
     {
         var width = heightMapTexture.width;
         var height = heightMapTexture.height;
-        var amount = 100;
+        var amount = treeAmount;
         var startPos = new Vector3(transform.position.x, transform.position.y, transform.position.z);
         var minHeight = 25;
         var _maxSlope = (float)16 / 255;

@@ -52,6 +52,7 @@ public static class FinalTextureGenerator
     public static TextureMapData GenerateTextureMap(Texture2D heightMap, Texture2D slopeMap)
     {
         Texture2D textureMap = new Texture2D(heightMap.width, heightMap.height, TextureFormat.RGBA32, heightMap.mipmapCount, false);
+        textureMap.wrapMode = TextureWrapMode.MirrorOnce;
         SetTextureToColor(textureMap, Color.black);
         
         var slopeMapData = new TextureMapData(slopeMap);
@@ -64,6 +65,108 @@ public static class FinalTextureGenerator
             {
                 newPixels[x, y] = Color.Lerp(Color.green, Color.grey, slopeMapData.Pixels[x, y].r*10);
             }
+        }
+
+        textureMapData.Pixels = newPixels;
+        return textureMapData;
+    }
+
+    public static TextureMapData NewSlopeMap(Texture2D heightMap)
+    {
+        Texture2D slopeMap = new Texture2D(heightMap.width, heightMap.height, TextureFormat.R16, heightMap.mipmapCount, false);
+        SetTextureToColor(slopeMap, Color.black);
+
+        var heightMapData = new TextureMapData(heightMap);
+        var slopeMapData = new TextureMapData(slopeMap);
+        Color[,] newPixels = new Color[slopeMapData.Width, slopeMapData.Height];
+
+        for (int y = 0; y < heightMapData.Height; y++)
+        {
+            for (int x = 0; x < heightMapData.Width; x++)
+            {
+                bool completeDataSet = true;
+                Color[] colors = new Color[9];
+                
+                /*
+                 0 = left top
+                 1 = middle top
+                 2 = right top
+                 
+                 3 = left middle
+                 4 = middle middle
+                 5 = right middle
+                 
+                 6 = left bottom
+                 7 = middle bottom
+                 8 = right bottom
+                 */
+
+                try { colors[0] = heightMapData.Pixels[x - 1, y + 1]; }catch { completeDataSet = false;}
+                try { colors[1] = heightMapData.Pixels[x    , y + 1]; }catch { completeDataSet = false;}
+                try { colors[2] = heightMapData.Pixels[x + 1, y + 1]; }catch { completeDataSet = false;}
+                
+                try { colors[3] = heightMapData.Pixels[x - 1, y    ]; }catch { completeDataSet = false;}
+                try { colors[4] = heightMapData.Pixels[x    , y    ]; }catch { completeDataSet = false;}
+                try { colors[5] = heightMapData.Pixels[x + 1, y    ]; }catch { completeDataSet = false;}
+                
+                try { colors[6] = heightMapData.Pixels[x - 1, y - 1]; }catch { completeDataSet = false;}
+                try { colors[7] = heightMapData.Pixels[x    , y - 1]; }catch { completeDataSet = false;}
+                try { colors[8] = heightMapData.Pixels[x + 1, y - 1]; }catch { completeDataSet = false;}
+
+                List<float> values = new List<float>();
+
+                if (completeDataSet)
+                {
+                    values.Add(MathExtensions.BiggestMinusSmallest(colors[0].r, colors[8].r) / 2f);
+                    values.Add(MathExtensions.BiggestMinusSmallest(colors[1].r, colors[7].r) / 2f);
+                    values.Add(MathExtensions.BiggestMinusSmallest(colors[2].r, colors[6].r) / 2f);
+                    values.Add(MathExtensions.BiggestMinusSmallest(colors[3].r, colors[5].r) / 2f);
+                }
+                else
+                {
+                    values.Add(MathExtensions.BiggestMinusSmallest(colors[0].r, colors[4].r));
+                    values.Add(MathExtensions.BiggestMinusSmallest(colors[1].r, colors[4].r));
+                    values.Add(MathExtensions.BiggestMinusSmallest(colors[2].r, colors[4].r));
+                    values.Add(MathExtensions.BiggestMinusSmallest(colors[3].r, colors[4].r));
+                    values.Add(MathExtensions.BiggestMinusSmallest(colors[4].r, colors[4].r));
+                    values.Add(MathExtensions.BiggestMinusSmallest(colors[5].r, colors[4].r));
+                    values.Add(MathExtensions.BiggestMinusSmallest(colors[6].r, colors[4].r));
+                    values.Add(MathExtensions.BiggestMinusSmallest(colors[7].r, colors[4].r));
+                }
+
+                var highest = MathExtensions.MaxValue(values.ToArray());
+                newPixels[x, y] = new Color(highest*10, 0, 0, 0);
+            }
+        }
+        
+        slopeMapData.Pixels = newPixels;
+        return slopeMapData;
+    }
+
+    public static TextureMapData NewTextureMap(Texture2D heightMap, Texture2D slopeMap)
+    {
+        Texture2D textureMap = new Texture2D(slopeMap.width-1, slopeMap.height-1, TextureFormat.RGBA32, -1, false);
+        textureMap.wrapMode = TextureWrapMode.MirrorOnce;
+        SetTextureToColor(textureMap, Color.black);
+        
+        var slopeMapData = new TextureMapData(slopeMap);
+        var textureMapData = new TextureMapData(textureMap);
+        Color[,] newPixels = new Color[textureMapData.Width, textureMapData.Height];
+        
+        for (int y = 0; y < textureMapData.Height; y++)
+        {
+            for (int x = 0; x < textureMapData.Width; x++)
+            {
+                float quadAverage = MathExtensions.AverageValue(new float[]
+                {
+                    slopeMapData.Pixels[x    , y    ].r,
+                    slopeMapData.Pixels[x + 1, y    ].r,
+                    slopeMapData.Pixels[x    , y + 1].r,
+                    slopeMapData.Pixels[x + 1, y + 1].r
+                });
+                
+                newPixels[x, y] = Color.Lerp(Color.green, Color.grey, quadAverage*10);
+            }    
         }
 
         textureMapData.Pixels = newPixels;

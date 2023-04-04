@@ -5,6 +5,13 @@ using UnityEngine;
 
 public static class MathExtensions
 {
+    public static float BiggestMinusSmallest(float one, float two)
+    {
+        if (one > two) { return one - two; }
+        if (two > one) { return two - one; }
+        return 0;
+    }
+    
     public static float MaxValue (float[] floatArray)
     {
         return floatArray.Prepend(0f).Max();
