@@ -8,7 +8,7 @@ using UnityEngine;
 public class FinalTerrainGenerator : MonoBehaviour
 {
     public CustomTerrainData data;
-    public Transform treePrefab;
+    public List<Transform> treePrefabs;
     public int treeAmount = 100;
     public Transform shrubPrefab;
 
@@ -215,8 +215,13 @@ public class FinalTerrainGenerator : MonoBehaviour
             try{ if(slopemap.Pixels[x - 1, y - 1].r > _maxSlope){continue;}}catch{/*ignored*/}
 
             if (heightmap.Pixels[x, y].r >= (float)minHeight / heightmap.Width)
-                Instantiate(treePrefab, new Vector3(x+treeLibraryGameObject.transform.position.x, (heightmap.Pixels[x, y].r * width) + treeLibraryGameObject.transform.position.y, y+treeLibraryGameObject.transform.position.z),
-                    treePrefab.rotation, treeLibraryGameObject.transform);
+            {
+                int rng = Random.Range(0, treePrefabs.Count);
+
+                Instantiate(treePrefabs[rng], new Vector3(x+treeLibraryGameObject.transform.position.x, (heightmap.Pixels[x, y].r * width) + treeLibraryGameObject.transform.position.y, y+treeLibraryGameObject.transform.position.z),
+                    treePrefabs[rng].rotation, treeLibraryGameObject.transform);
+                
+            }
             else continue;
             
             index++;
@@ -228,6 +233,7 @@ public class FinalTerrainGenerator : MonoBehaviour
     public void LoadShrubs(Texture2D heightMapTexture, Texture2D slopeMapTexture, Texture2D groundTexture, GameObject terrainGameObject, GameObject shrubLibraryGameObject, Texture2D normalMap)
     {
         float minConstraintShrub = 0.7f;
+        var minHeight = 25;
         
         TextureMapData heightmap = new TextureMapData(heightMapTexture);
         TextureMapData groundTextureData = new TextureMapData(groundTexture);
@@ -244,10 +250,13 @@ public class FinalTerrainGenerator : MonoBehaviour
                 
                 if (groundTextureData.Pixels[x, y].g > minConstraintShrub && rng == 1)
                 {
-                    var shrub = Instantiate(shrubPrefab, new Vector3(x+shrubLibraryGameObject.transform.position.x, (heightmap.Pixels[x, y].r * heightMapTexture.width) + shrubLibraryGameObject.transform.position.y, y+shrubLibraryGameObject.transform.position.z),
-                        shrubPrefab.rotation, shrubLibraryGameObject.transform);
-                    var normalPixel = normalMapData.Pixels[x, y];
-                    shrub.up = new Vector3(normalPixel.r, normalPixel.g, normalPixel.b);
+                    if (heightmap.Pixels[x, y].r >= (float)minHeight / heightmap.Width)
+                    {
+                        var shrub = Instantiate(shrubPrefab, new Vector3(x+shrubLibraryGameObject.transform.position.x, (heightmap.Pixels[x, y].r * heightMapTexture.width) + shrubLibraryGameObject.transform.position.y, y+shrubLibraryGameObject.transform.position.z),
+                            shrubPrefab.rotation, shrubLibraryGameObject.transform);
+                        var normalPixel = normalMapData.Pixels[x, y];
+                        shrub.up = new Vector3(normalPixel.r, normalPixel.g, normalPixel.b);
+                    }
                 }
             }
         }

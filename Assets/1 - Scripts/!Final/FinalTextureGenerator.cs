@@ -51,10 +51,13 @@ public static class FinalTextureGenerator
 
     public static TextureMapData GenerateTextureMap(Texture2D heightMap, Texture2D slopeMap)
     {
+        var minHeight = 25;
+        
         Texture2D textureMap = new Texture2D(heightMap.width, heightMap.height, TextureFormat.RGBA32, heightMap.mipmapCount, false);
         textureMap.wrapMode = TextureWrapMode.MirrorOnce;
         SetTextureToColor(textureMap, Color.black);
-        
+
+        var heightMapData = new TextureMapData(heightMap);
         var slopeMapData = new TextureMapData(slopeMap);
         var textureMapData = new TextureMapData(textureMap);
         Color[,] newPixels = new Color[textureMapData.Width, textureMapData.Height];
@@ -63,7 +66,9 @@ public static class FinalTextureGenerator
         {
             for (int y = 0; y < slopeMapData.Height; y++)
             {
-                newPixels[x, y] = Color.Lerp(Color.green, Color.grey, slopeMapData.Pixels[x, y].r*10);
+                if (heightMapData.Pixels[x, y].r >= (float)minHeight / heightMapData.Width)
+                    newPixels[x, y] = Color.Lerp(Color.green, Color.grey, slopeMapData.Pixels[x, y].r * 10);
+                else newPixels[x, y] = new Color(150, 75, 0);
             }
         }
 
