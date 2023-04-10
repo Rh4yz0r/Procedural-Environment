@@ -3,6 +3,7 @@ Shader "Unlit/TriplanarBlended"
     Properties 
     {
                         _BlendMap ("BlendMap (RGBA)", 2D) = "red" {}
+                        _BlendMapScale("Scale", Range(1, 256)) = 1
         //----------------------------------------------------------------
                         _Splat0_MainTex ("Albedo (RGB)", 2D) = "white" {}
         [NoScaleOffset] _Splat0_BumpMap("Normal Map", 2D) = "bump" {}
@@ -44,7 +45,7 @@ Shader "Unlit/TriplanarBlended"
         CGPROGRAM
         // Physically based Standard lighting model, and enable shadows on all light types
         #pragma surface surf Standard fullforwardshadows
-        #pragma surface surf Lambert
+        //#pragma surface surf Lambert
         
         // Use shader model 3.0 target, to get nicer looking lighting
         #pragma target 3.0
@@ -70,6 +71,8 @@ Shader "Unlit/TriplanarBlended"
         
         //---------------------------------------------------------------------------------------------------
         //---------------------------------------------------------------------------------------------------
+        half _BlendMapScale;
+        
         sampler2D _BlendMap;
         float4    _BlendMap_ST;
         //------------------------------------------------------------------------
@@ -446,9 +449,8 @@ Shader "Unlit/TriplanarBlended"
             float3 baseWorldPos = unity_ObjectToWorld._m03_m13_m23;
             
             float2 pos = IN.worldPos.xz - baseWorldPos.xz;
-            pos.xy += 5 * worldScale.xz;
             
-            fixed4 splat_control = tex2D (_BlendMap, pos/ 10 / worldScale.xz);
+            fixed4 splat_control = tex2D (_BlendMap, (pos / worldScale.xz) / _BlendMapScale);
 
             fixed3 color;
             color  = splat_control.r * splat0_col;

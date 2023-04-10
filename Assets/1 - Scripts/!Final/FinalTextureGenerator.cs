@@ -177,6 +177,44 @@ public static class FinalTextureGenerator
         textureMapData.Pixels = newPixels;
         return textureMapData;
     }
+
+    public static TextureMapData GenerateBlendMap(Texture2D heightMap, Texture2D slopeMap)
+    {
+        var minHeight = 25;
+        
+        Texture2D blendMap = new Texture2D(heightMap.width, heightMap.height, TextureFormat.RGBA32, heightMap.mipmapCount, false);
+        blendMap.wrapMode = TextureWrapMode.MirrorOnce;
+        SetTextureToColor(blendMap, Color.green);
+
+        var heightMapData = new TextureMapData(heightMap);
+        var slopeMapData = new TextureMapData(slopeMap);
+        var textureMapData = new TextureMapData(blendMap);
+        Color[,] newPixels = new Color[textureMapData.Width, textureMapData.Height];
+
+        for (int x = 0; x < slopeMapData.Width; x++)
+        {
+            for (int y = 0; y < slopeMapData.Height; y++)
+            {
+                if (heightMapData.Pixels[x, y].r >= (float)minHeight / heightMapData.Width)
+                {
+                    if(slopeMapData.Pixels[x, y].r >= 0f && slopeMapData.Pixels[x, y].r < 0.05f)
+                        newPixels[x, y] = new Color(1, 0, 0, 0);
+                    
+                    else if(slopeMapData.Pixels[x, y].r >= 0.05f && slopeMapData.Pixels[x, y].r < 0.07f) 
+                        newPixels[x, y] = Color.Lerp(new Color(1, 0, 0, 0), new Color(0, 0, 0, 1), slopeMapData.Pixels[x, y].r * 10);
+                    
+                    else if(slopeMapData.Pixels[x, y].r >= 0.07f && slopeMapData.Pixels[x, y].r < 0.14f)
+                        newPixels[x, y] = Color.Lerp(new Color(0, 0, 0, 1), new Color(0, 1, 0, 0), slopeMapData.Pixels[x, y].r * 10);
+                    
+                    else newPixels[x, y] = new Color(0, 1, 0, 0);
+                }
+                else newPixels[x, y] = new Color(0, 0, 1, 0);
+            }
+        }
+
+        textureMapData.Pixels = newPixels;
+        return textureMapData;
+    }
     
     #endregion
 

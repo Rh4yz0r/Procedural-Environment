@@ -12,6 +12,8 @@ public class FinalTerrainGenerator : MonoBehaviour
     public int treeAmount = 100;
     public Transform shrubPrefab;
 
+    public Material groundBase;
+
     public List<Texture2D> chunks;
     public List<Texture2D> chunkSlopes;
     public List<Texture2D> chunkNormals;
@@ -48,7 +50,7 @@ public class FinalTerrainGenerator : MonoBehaviour
             var slopeMapChunks = NewChunker.NewChunkTexture(slopeMap, out var redundant);
             this.chunkSlopes = slopeMapChunks.ToList();
 
-            var textureMap = FinalTextureGenerator.GenerateTextureMap(data.heightMap.Asset, slopeMap.Texture2D);
+            var textureMap = FinalTextureGenerator.GenerateBlendMap(data.heightMap.Asset, slopeMap.Texture2D);
             var textureMapChunks = NewChunker.NewChunkTexture(textureMap, out var redundant2);
             this.chunkTextures = textureMapChunks.ToList();
 
@@ -161,12 +163,15 @@ public class FinalTerrainGenerator : MonoBehaviour
         
         for (int i = 0, y = 0; y < height+1; y++) 
         {
-            for (int x = 0; x < width+1; x++, i++) 
+            for (int x = 0; x < width+1; x++, i++)
             {
-                EditorUtility.DisplayProgressBar("Creating terrain", $"Calculating normals: {(x + (y * width))}/{(width+1) * (height+1)}",
-                    (float)(x + (y * (width+1))) / ((width+1) * (height+1)));
-                
-                normalPixels[x, y] = new Color(mesh.normals[i].x, mesh.normals[i].y, mesh.normals[i].z);
+                float total = (width + 1) * (height + 1);
+                float part = x + (y * (width + 1));
+                EditorUtility.DisplayProgressBar("Creating terrain", $"Calculating normals: {part}/{total}",
+                    (float)part / total);
+
+                var normal = mesh.normals[i];
+                normalPixels[x, y] = new Color(normal.x, normal.y, normal.z);
             }
         }
         normalMapData.Pixels = normalPixels;
@@ -177,8 +182,10 @@ public class FinalTerrainGenerator : MonoBehaviour
 
     public void LoadTextures(Texture2D heightMapTexture, Texture2D slopeMapTexture, Texture2D groundTexture, GameObject terrainGameObject)
     {
-        Material chunkMat = new Material(Shader.Find("Standard"));
-        chunkMat.mainTexture = groundTexture;
+        //Material chunkMat = new Material(Shader.Find("Standard"));
+        Material chunkMat = new Material(groundBase);
+        chunkMat.SetTexture("_BlendMap", groundTexture);
+        chunkMat.SetFloat("_BlendMapScale", heightMapTexture.width-1);
         chunkMat.name = $"{groundTexture}";
         terrainGameObject.GetComponent<MeshRenderer>().material = chunkMat;
     }
@@ -243,12 +250,13 @@ public class FinalTerrainGenerator : MonoBehaviour
         {
             for (int x = 0; x < groundTexture.width; x++)
             {
-                if (EditorUtility.DisplayCancelableProgressBar("Spawning Shrubs", $"Busy Spawning Shrubs: {(x + (y * groundTexture.height))}/{groundTexture.width * groundTexture.height}",
-                        (float)(x + (y * groundTexture.height)) / groundTexture.width * groundTexture.height)) break;
+                EditorUtility.DisplayCancelableProgressBar("Spawning Shrubs",
+                    $"Busy Spawning Shrubs: {(x + (y * groundTexture.height))}/{groundTexture.width * groundTexture.height}",
+                    (float)(x + (y * groundTexture.height)) / groundTexture.width * groundTexture.height);
 
                 var rng = Random.Range(0, 2);
                 
-                if (groundTextureData.Pixels[x, y].g > minConstraintShrub && rng == 1)
+                if (groundTextureData.Pixels[x, y].r > minConstraintShrub && rng == 1)
                 {
                     if (heightmap.Pixels[x, y].r >= (float)minHeight / heightmap.Width)
                     {
